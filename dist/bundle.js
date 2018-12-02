@@ -96,28 +96,43 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 class Enemy {
-  constructor() {
-    this.position = [30, 30];
+  constructor(canvas, ctx) {
+    this.position = [500, 50];
+    this.ctx = ctx
+    this.width = 50;
+    this.height = 50;
+    this.move = this.move.bind(this)
+    this.draw = this.draw.bind(this)
+    this.canvas = canvas;
   }
 
-  draw(ctx) {
-    ctx.beginPath();
-    ctx.rect(this.position[0], this.position[1], 10, 50)
-    ctx.fillStyle = 'black';
-    ctx.fill();
-    ctx.lineWidth = 1
-    ctx.strokeStyle = 'yellow';
-    ctx.stroke();
+  draw() {
+
+    this.ctx.beginPath();
+    this.ctx.rect(this.position[0], this.position[1], this.width, this.height)
+    this.ctx.fillStyle = 'black';
+    this.ctx.fill();
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
+    this.move()
+    // window.requestAnimationFrame(this.draw)
   }
 
   move() {
-    this.position[0] -= 10;
+    this.position[0] -= 2;
+
   }
 
-  step(ctx) {
-    this.draw(ctx);
-    this.move()
-  }
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: this.width,
+      height: this.height,
+    }
+  };
+
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Enemy);
@@ -141,7 +156,7 @@ __webpack_require__.r(__webpack_exports__);
 
 class Game {
   constructor(canvas, ctx) {
-    this.enemy = new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"]();
+    this.enemy = new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](canvas, ctx);
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_1__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
@@ -149,14 +164,13 @@ class Game {
   }
 
   draw() {
-    // this.enemy.draw(this.ctx)
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    this.ctx.beginPath();
-    this.ctx.lineWidth="6";
-    this.ctx.strokeStyle="red";
-    this.ctx.rect(5,5,290,140);
-    this.ctx.stroke();
+    this.enemy.draw();
     this.link.draw();
+    debugger
+    if (this.link.collidedWith(this.enemy)) {
+      console.log("ouch!")
+    }
+    window.requestAnimationFrame(this.draw)
   }
 
 }
@@ -182,21 +196,21 @@ const dir_hash_y = {
   "walkLeft": 30,
   "walkDown": 30,
   "walkUp": 120,
-}
+};
 
 const dir_hash_x = {
   "walkRight": [241, 271, 301, 331, 361, 391],
   "walkLeft": [241, 271, 301, 331, 361, 391],
   "walkDown": [0, 30, 60, 90, 120, 150, 180, 210],
   "walkUp": [0, 30, 60, 90, 120, 150, 180, 210],
-}
+};
 
 const standing = [
   [331, 120],
   [151, 0],
   [31, 0],
   [61, 0],
-] //right left down up
+]; //right left down up
 
 class Link {
   constructor(canvas, ctx) {
@@ -211,38 +225,42 @@ class Link {
     this.scaledHeight = this.scale*this.height;
     this.currentLoopIndex = 0;
     this.currentDirection = 0;
-    this.canvasX = 0;
-    this.canvasY = 0;
+    this.position = [0, 0]
     this.frameCount = 0;
 
-    this.step = this.step.bind(this)
-    this.move = this.move.bind(this)
-  }
+    this.step = this.step.bind(this);
+    this.move = this.move.bind(this);
+  };
 
   drawFrame(direction, frameX, frameY, canvasX, canvasY) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.link,
       dir_hash_x[direction][frameX],
       dir_hash_y[direction],
       this.width,
       this.height,
-      canvasX,
-      canvasY,
+      this.position[0],
+      this.position[1],
       this.scaledWidth,
       this.scaledHeight,
     )
-  }
+    this.ctx.beginPath();
+    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
+  };
 
   step() {
     let numFrames = dir_hash_x[directions[this.currentDirection]].length
     let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
     this.frameCount++
     if (this.frameCount < 5) {
-      window.requestAnimationFrame(this.step);
       return;
     }
+
     this.frameCount = 0;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.drawFrame(
       directions[this.currentDirection],
       cycleLoop[this.currentLoopIndex],
@@ -250,46 +268,61 @@ class Link {
       this.canvasX,
       this.canvasY,
       80,
-      100
+      100,
     );
 
     this.currentLoopIndex++;
     if (this.currentLoopIndex >= cycleLoop.length) {
       this.currentLoopIndex = 0;
     }
-    window.requestAnimationFrame(this.step);
-  }
+  };
 
   draw() {
-    this.step()
-  }
+    this.step();
+  };
 
   move(e) {
     if (e.key === "ArrowLeft") {
-      this.canvasX -= 20;
+      this.position[0] -= 20;
       this.currentDirection = 1;
     } else if (e.key === "ArrowRight") {
-      this.canvasX += 20;
+      this.position[0] += 20;
       this.currentDirection = 0;
     } else if (e.key === "ArrowDown") {
-      this.canvasY += 20;
+      this.position[1] += 20;
       this.currentDirection = 2;
     } else if (e.key === "ArrowUp") {
-      this.canvasY -= 20;
+      this.position[1] -= 20;
       this.currentDirection = 3;
     } else {
-      return
+      return;
     }
-    // step()
-  }
+  };
 
-// stand(e) {
-//     moving = false
-//     ctx.clearRect(0, 0, canvas.width, canvas.height)
-//     ctx.drawImage(
-//       link, standing[currentDirection][0], standing[currentDirection][1], width, height, canvasX, canvasY, scaledWidth, scaledHeight
-//     );
-//   }
+  hitbox() {
+    debugger
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: this.scaledWidth,
+      height: this.scaledHeight,
+    }
+  };
+
+  collidedWith(object) {
+    let linkHit = this.hitbox()
+    let objectHit = object.hitbox()
+    debugger
+    if (
+      linkHit.x < objectHit.x + objectHit.width &&
+      linkHit.x + linkHit.width > objectHit.x &&
+      linkHit.y < objectHit.y + objectHit.height &&
+      linkHit.y + linkHit.height > objectHit.y) {
+      return true
+    } else {
+      return false
+    }
+  };
 
 }
 
