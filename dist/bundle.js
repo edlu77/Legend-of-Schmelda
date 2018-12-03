@@ -106,12 +106,29 @@ class Enemy {
     this.canvas = canvas;
     this.life = 3;
     this.speed = 2;
+    this.destroyed = false;
   }
 
-  recoil() {
-    // this.position = [this.position[0] + 50, this.position[1] + 50]
+  recoil(attackedSide) {
     this.ctx.fillStyle = 'red';
     this.ctx.fill();
+    if (attackedSide === 0) {
+      this.position = [this.position[0] + 50, this.position[1]]
+    } else if (attackedSide === 1) {
+      this.position = [this.position[0] - 50, this.position[1]]
+    } else if (attackedSide === 2) {
+      this.position = [this.position[0], this.position[1] + 50]
+    } else {
+      this.position = [this.position[0], this.position[1] - 50]
+    }
+  }
+
+  isAlive() {
+    if (this.life === 0) {
+      return false
+    } else {
+      return true
+    }
   }
 
   draw() {
@@ -173,15 +190,21 @@ class Game {
   }
 
   draw() {
-    this.enemy.draw();
-    this.link.draw();
-    if (this.link.collidedWith(this.enemy)) {
-      // this.link.recoil();
-      console.log("ouch!")
+    if (this.enemy.isAlive()) {
+      this.enemy.draw();
+      this.link.draw();
+      if (this.link.collidedWith(this.enemy)) {
+        // this.link.recoil();
+        console.log("ouch!")
+      }
+      if (this.link.attackedObject(this.enemy)) {
+        this.enemy.recoil(this.link.currentDirection);
+        this.enemy.life -= 1
+      }
+    } else {
+      this.link.draw();
     }
-    if (this.link.attackedObject(this.enemy)) {
-      this.enemy.recoil();
-    }
+
     window.requestAnimationFrame(this.draw)
   }
 
@@ -414,8 +437,6 @@ class Link {
       this.attacking = false;
       this.position[1] -= 20;
       this.currentDirection = 3;
-    } else {
-      this.walking = false;
     }
   };
 
