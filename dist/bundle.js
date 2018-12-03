@@ -284,7 +284,7 @@ class Link {
   };
 
   hurtbox() {
-    debugger
+
     if (this.currentDirection === 0) {
       return {
         x: this.position[0] + this.scaledWidth,
