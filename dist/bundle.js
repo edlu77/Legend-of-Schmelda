@@ -97,7 +97,7 @@
 __webpack_require__.r(__webpack_exports__);
 class Enemy {
   constructor(canvas, ctx) {
-    this.position = [500, 50];
+    this.position = [300, 300];
     this.ctx = ctx
     this.width = 50;
     this.height = 50;
@@ -105,6 +105,13 @@ class Enemy {
     this.draw = this.draw.bind(this)
     this.canvas = canvas;
     this.life = 3;
+    this.speed = 2;
+  }
+
+  recoil() {
+    // this.position = [this.position[0] + 50, this.position[1] + 50]
+    this.ctx.fillStyle = 'red';
+    this.ctx.fill();
   }
 
   draw() {
@@ -119,7 +126,10 @@ class Enemy {
   }
 
   move() {
-    this.position[0] -= 2;
+    this.position[0] += this.speed;
+    if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
+      this.speed = this.speed*-1
+    }
   }
 
   hitbox() {
@@ -163,10 +173,14 @@ class Game {
   }
 
   draw() {
-    // this.enemy.draw();
+    this.enemy.draw();
     this.link.draw();
     if (this.link.collidedWith(this.enemy)) {
+      // this.link.recoil();
       console.log("ouch!")
+    }
+    if (this.link.attackedObject(this.enemy)) {
+      this.enemy.recoil();
     }
     window.requestAnimationFrame(this.draw)
   }
@@ -218,16 +232,16 @@ const standing = [
 const attack_directions = ["attackRight", "attackLeft", "attackDown", "attackUp"]
 
 const attack_y = {
-  "attackRight": 180,
-  "attackLeft": 90,
-  "attackDown": 90,
-  "attackUp": 180,
+  "attackRight": [180, 180, 180, 180, 178],
+  "attackLeft": [90, 90, 90, 90, 88],
+  "attackDown": [85, 85, 84, 84, 84, 84],
+  "attackUp": [175, 174, 174, 174, 174],
 }
 
 const attack_x = {
-  "attackRight": [241, 271, 301, 331, 361, 391],
-  "attackLeft": [241, 271, 301, 331, 361, 391],
-  "attackDown": [0, 30, 60, 90, 120],
+  "attackRight": [237, 267, 297, 327, 357],
+  "attackLeft": [237, 267, 297, 327, 357],
+  "attackDown": [0, 30, 60, 90, 120, 146],
   "attackUp": [0, 30, 60, 90, 120],
 }
 
@@ -269,6 +283,39 @@ class Link {
     }
   };
 
+  hurtbox() {
+    debugger
+    if (this.currentDirection === 0) {
+      return {
+        x: this.position[0] + this.scaledWidth,
+        y: this.position[1],
+        width: 8*this.scale,
+        height: this.scaledHeight,
+      }
+    } else if (this.currentDirection === 1) {
+      return {
+        x: this.position[0] - 4*this.scale,
+        y: this.position[1],
+        width: 4*this.scale,
+        height: this.scaledHeight,
+      }
+    } else if (this.currentDirection === 2) {
+      return {
+        x: this.position[0],
+        y: this.position[1] + this.scaledHeight,
+        width: this.scaledWidth + 4.5*this.scale,
+        height: 8*this.scale,
+      }
+    } else {
+      return {
+        x: this.position[0],
+        y: this.position[1] - 5*this.scale,
+        width: this.scaledWidth + 4.5*this.scale,
+        height: 5*this.scale,
+      }
+    }
+  }
+
   collidedWith(object) {
     let linkHit = this.hitbox()
     let objectHit = object.hitbox()
@@ -283,6 +330,26 @@ class Link {
         return false
     }
   };
+
+  attackedObject(object) {
+    let swordHit = this.hurtbox()
+    let objectHit = object.hitbox()
+    if ( this.attacking &&
+      swordHit.x < objectHit.x + objectHit.width &&
+      swordHit.x + swordHit.width > objectHit.x &&
+      swordHit.y < objectHit.y + objectHit.height &&
+      swordHit.y + swordHit.height > objectHit.y
+      ) {
+        return true
+      } else {
+        return false
+    }
+  }
+
+
+  recoil() {
+    this.position = [this.position[0] - 50, this.position[1] - 50]
+  }
 
   //moving
 
@@ -299,11 +366,11 @@ class Link {
       this.scaledWidth,
       this.scaledHeight,
     )
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   };
 
   step() {
@@ -355,29 +422,39 @@ class Link {
   //attacking
 
   drawAttackFrame(direction, frameX, frameY) {
+    let attackWidth;
+    let attackHeight;
+    if (direction === "attackUp" || direction === "attackDown") {
+      attackWidth = 24.5;
+      attackHeight = 35;
+    } else {
+      attackWidth = 28;
+      attackHeight = 25;
+    };
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.link,
       attack_x[direction][frameX],
-      attack_y[direction],
-      this.width,
-      this.height,
+      attack_y[direction][frameY],
+      attackWidth,
+      attackHeight,
       this.position[0],
       this.position[1],
-      this.scaledWidth,
-      this.scaledHeight,
+      attackWidth*this.scale,
+      attackHeight*this.scale,
     )
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0], this.position[1], attackWidth*this.scale, attackHeight*this.scale)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   };
 
   swing() {
     if (this.attacking === true) {
-      let numFrames = 5
-      let cycleLoop = [0,1,2,3,4]
+      let numFrames = attack_x[attack_directions[this.currentDirection]].length
+      let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
 
       this.attackFrameCount++
       if (this.attackFrameCount < 3) {
@@ -387,6 +464,7 @@ class Link {
 
       this.drawAttackFrame(
         attack_directions[this.currentDirection],
+        cycleLoop[this.currentAttackLoopIndex],
         cycleLoop[this.currentAttackLoopIndex],
       ),
       this.currentAttackLoopIndex++;
