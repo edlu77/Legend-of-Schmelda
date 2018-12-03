@@ -104,10 +104,10 @@ class Enemy {
     this.move = this.move.bind(this)
     this.draw = this.draw.bind(this)
     this.canvas = canvas;
+    this.life = 3;
   }
 
   draw() {
-
     this.ctx.beginPath();
     this.ctx.rect(this.position[0], this.position[1], this.width, this.height)
     this.ctx.fillStyle = 'black';
@@ -116,12 +116,10 @@ class Enemy {
     this.ctx.strokeStyle = 'yellow';
     this.ctx.stroke();
     this.move()
-    // window.requestAnimationFrame(this.draw)
   }
 
   move() {
     this.position[0] -= 2;
-
   }
 
   hitbox() {
@@ -157,20 +155,25 @@ __webpack_require__.r(__webpack_exports__);
 class Game {
   constructor(canvas, ctx) {
     this.enemy = new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](canvas, ctx);
+    this.enemies = [];
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_1__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
-    this.draw = this.draw.bind(this)
+    this.draw = this.draw.bind(this);
   }
 
   draw() {
-    this.enemy.draw();
+    // this.enemy.draw();
     this.link.draw();
-    debugger
     if (this.link.collidedWith(this.enemy)) {
       console.log("ouch!")
     }
     window.requestAnimationFrame(this.draw)
+  }
+
+  makeEnemy() {
+    this.enemies.push(new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx));
+
   }
 
 }
@@ -212,6 +215,23 @@ const standing = [
   [61, 0],
 ]; //right left down up
 
+const attack_directions = ["attackRight", "attackLeft", "attackDown", "attackUp"]
+
+const attack_y = {
+  "attackRight": 180,
+  "attackLeft": 90,
+  "attackDown": 90,
+  "attackUp": 180,
+}
+
+const attack_x = {
+  "attackRight": [241, 271, 301, 331, 361, 391],
+  "attackLeft": [241, 271, 301, 331, 361, 391],
+  "attackDown": [0, 30, 60, 90, 120],
+  "attackUp": [0, 30, 60, 90, 120],
+}
+
+
 class Link {
   constructor(canvas, ctx) {
     this.canvas = canvas;
@@ -224,15 +244,50 @@ class Link {
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
     this.currentLoopIndex = 0;
+    this.currentAttackLoopIndex = 0;
     this.currentDirection = 0;
     this.position = [0, 0]
     this.frameCount = 0;
+    this.attackFrameCount = 0;
+    this.life = 3;
+    this.attacking = false;
+    this.walking = true;
 
     this.step = this.step.bind(this);
     this.move = this.move.bind(this);
+    this.stand = this.stand.bind(this);
+    this.attack = this.attack.bind(this);
+    this.combineCallbacks = this.combineCallbacks.bind(this);
   };
 
-  drawFrame(direction, frameX, frameY, canvasX, canvasY) {
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: this.scaledWidth,
+      height: this.scaledHeight,
+    }
+  };
+
+  collidedWith(object) {
+    let linkHit = this.hitbox()
+    let objectHit = object.hitbox()
+    if (
+      linkHit.x < objectHit.x + objectHit.width &&
+      linkHit.x + linkHit.width > objectHit.x &&
+      linkHit.y < objectHit.y + objectHit.height &&
+      linkHit.y + linkHit.height > objectHit.y
+      ) {
+        return true
+      } else {
+        return false
+    }
+  };
+
+  //moving
+
+  drawWalkFrame(direction, frameX, frameY) {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.link,
       dir_hash_x[direction][frameX],
@@ -252,77 +307,131 @@ class Link {
   };
 
   step() {
-    let numFrames = dir_hash_x[directions[this.currentDirection]].length
-    let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
-    this.frameCount++
-    if (this.frameCount < 5) {
-      return;
+      if (this.walking === true) {
+
+      let numFrames = dir_hash_x[directions[this.currentDirection]].length
+      let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
+
+      this.frameCount++
+      if (this.frameCount < 5) {
+        return;
+      }
+      this.frameCount = 0;
+      this.drawWalkFrame(
+        directions[this.currentDirection],
+        cycleLoop[this.currentLoopIndex],
+
+      );
+      this.currentLoopIndex++;
+      if (this.currentLoopIndex >= cycleLoop.length) {
+        this.currentLoopIndex = 0;
+      }
     }
-
-    this.frameCount = 0;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    this.drawFrame(
-      directions[this.currentDirection],
-      cycleLoop[this.currentLoopIndex],
-      dir_hash_y[directions[this.currentDirection]],
-      this.canvasX,
-      this.canvasY,
-      80,
-      100,
-    );
-
-    this.currentLoopIndex++;
-    if (this.currentLoopIndex >= cycleLoop.length) {
-      this.currentLoopIndex = 0;
-    }
-  };
-
-  draw() {
-    this.step();
   };
 
   move(e) {
+    this.walking = true
     if (e.key === "ArrowLeft") {
+      this.attacking = false;
       this.position[0] -= 20;
       this.currentDirection = 1;
     } else if (e.key === "ArrowRight") {
+      this.attacking = false;
       this.position[0] += 20;
       this.currentDirection = 0;
     } else if (e.key === "ArrowDown") {
+      this.attacking = false;
       this.position[1] += 20;
       this.currentDirection = 2;
     } else if (e.key === "ArrowUp") {
+      this.attacking = false;
       this.position[1] -= 20;
       this.currentDirection = 3;
     } else {
-      return;
+      this.walking = false;
     }
   };
 
-  hitbox() {
-    debugger
-    return {
-      x: this.position[0],
-      y: this.position[1],
-      width: this.scaledWidth,
-      height: this.scaledHeight,
-    }
+  //attacking
+
+  drawAttackFrame(direction, frameX, frameY) {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    this.ctx.drawImage(
+      this.link,
+      attack_x[direction][frameX],
+      attack_y[direction],
+      this.width,
+      this.height,
+      this.position[0],
+      this.position[1],
+      this.scaledWidth,
+      this.scaledHeight,
+    )
+    this.ctx.beginPath();
+    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
   };
 
-  collidedWith(object) {
-    let linkHit = this.hitbox()
-    let objectHit = object.hitbox()
-    debugger
-    if (
-      linkHit.x < objectHit.x + objectHit.width &&
-      linkHit.x + linkHit.width > objectHit.x &&
-      linkHit.y < objectHit.y + objectHit.height &&
-      linkHit.y + linkHit.height > objectHit.y) {
-      return true
+  swing() {
+    if (this.attacking === true) {
+      let numFrames = 5
+      let cycleLoop = [0,1,2,3,4]
+
+      this.attackFrameCount++
+      if (this.attackFrameCount < 3) {
+        return;
+      }
+      this.attackFrameCount = 0;
+
+      this.drawAttackFrame(
+        attack_directions[this.currentDirection],
+        cycleLoop[this.currentAttackLoopIndex],
+      ),
+      this.currentAttackLoopIndex++;
+      if (this.currentAttackLoopIndex >= cycleLoop.length) {
+        this.currentAttackLoopIndex = 0;
+        this.attacking = false;
+        this.walking = true;
+      }
+    }
+  }
+
+  attack(e) {
+    if (e.key === "a") {
+      this.walking = false;
+      this.attacking = true;
+      console.log("attacking")
     } else {
-      return false
+      this.attacking = false;
     }
+  }
+
+  stand() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    this.ctx.drawImage(
+      this.link,
+      standing[this.currentDirection][0],
+      standing[this.currentDirection][1],
+      this.width,
+      this.height,
+      this.position[0],
+      this.position[1],
+      this.scaledWidth,
+      this.scaledHeight,
+    );
+  }
+
+  draw() {
+    this.swing();
+    this.step();
   };
+
+  combineCallbacks(e) {
+    this.attack(e);
+    this.move(e);
+  }
 
 }
 
@@ -459,7 +568,7 @@ document.addEventListener('DOMContentLoaded', ()=> {
   const ctx = mainCanvas.getContext('2d');
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
   game.draw();
-  document.onkeydown = game.link.move;
+  document.onkeydown = game.link.combineCallbacks;
 });
 
 
