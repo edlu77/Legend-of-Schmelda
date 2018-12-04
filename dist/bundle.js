@@ -105,7 +105,7 @@ class Enemy {
     this.draw = this.draw.bind(this)
     this.canvas = canvas;
     this.life = 3;
-    this.speed = 1;
+    this.speed = .5;
     this.destroyed = false;
     this.currentDirection = dir_idx;
     this.entered = false;
@@ -244,7 +244,6 @@ class Game {
   makeEnemy() {
     if (this.enemies.length < 1) {
       this.enemies.push(new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, [this.canvas.width+50, Math.random()*this.canvas.height], 0));
-      console.log(this.enemies.length)
     }
   }
 
@@ -266,21 +265,21 @@ class Game {
 __webpack_require__.r(__webpack_exports__);
 const directions = ["walkRight", "walkLeft", "walkDown", "walkUp"]
 
-const dir_hash_x = {
+const WALK_X = {
   "walkRight": [241, 271, 301, 331, 361, 391],
   "walkLeft": [241, 271, 301, 331, 361, 391],
   "walkDown": [0, 30, 60, 90, 120, 150, 180, 210],
   "walkUp": [0, 30, 60, 90, 120, 150, 180, 210],
 };
 
-const dir_hash_y = {
+const WALK_Y = {
   "walkRight": 120,
   "walkLeft": 30,
   "walkDown": 30,
   "walkUp": 120,
 };
 
-const standing = [
+const STANDING = [
   [331, 120],
   [151, 0],
   [31, 0],
@@ -289,14 +288,14 @@ const standing = [
 
 const attack_directions = ["attackRight", "attackLeft", "attackDown", "attackUp"]
 
-const attack_x = {
+const ATTACK_X = {
   "attackRight": [242, 268, 295, 328, 360],
   "attackLeft": [242, 268, 295, 327, 359],
   "attackDown": [0, 30, 60, 90, 115, 145],
   "attackUp": [0, 30, 60, 88, 115],
 }
 
-const attack_y = {
+const ATTACK_Y = {
   "attackRight": [180, 180, 180, 180, 175],
   "attackLeft": [90, 90, 90, 90, 84],
   "attackDown": [90, 90, 86, 86, 86, 86],
@@ -362,7 +361,6 @@ class Link {
   };
 
   hurtbox() {
-
     if (this.currentDirection === 0) {
       return {
         x: this.position[0] + this.scaledWidth,
@@ -424,7 +422,6 @@ class Link {
     }
   }
 
-
   recoil(attackedSide) {
     this.ctx.fillStyle = 'red';
     this.ctx.fill();
@@ -459,8 +456,8 @@ class Link {
 
     this.ctx.drawImage(
       this.link,
-      dir_hash_x[direction][frameX],
-      dir_hash_y[direction],
+      WALK_X[direction][frameX],
+      WALK_Y[direction],
       this.width,
       this.height,
       this.position[0],
@@ -478,7 +475,7 @@ class Link {
   step() {
       if (this.walking === true) {
 
-      let numFrames = dir_hash_x[directions[this.currentDirection]].length
+      let numFrames = WALK_X[directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
 
       this.frameCount++
@@ -531,8 +528,8 @@ class Link {
 
     this.ctx.drawImage(
       this.link,
-      attack_x[direction][frame],
-      attack_y[direction][frame],
+      ATTACK_X[direction][frame],
+      ATTACK_Y[direction][frame],
       attackWidth,
       attackHeight,
       attackPosX,
@@ -549,7 +546,7 @@ class Link {
 
   swing() {
     if (this.attacking === true) {
-      let numFrames = attack_x[attack_directions[this.currentDirection]].length
+      let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
       while (this.currentAttackLoopIndex < cycleLoop.length) {
         this.attackFrameCount++
@@ -561,9 +558,6 @@ class Link {
           attack_directions[this.currentDirection],
           cycleLoop[this.currentAttackLoopIndex],
         ),
-        console.log(numFrames)
-        console.log(cycleLoop)
-        console.log(this.currentAttackLoopIndex)
         this.currentAttackLoopIndex++;
       }
       this.currentAttackLoopIndex = 0;
@@ -576,7 +570,6 @@ class Link {
     if (e.key === "a") {
       this.walking = false;
       this.attacking = true;
-      console.log("attacking")
     } else {
       this.attacking = false;
     }
@@ -586,8 +579,8 @@ class Link {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.link,
-      standing[this.currentDirection][0],
-      standing[this.currentDirection][1],
+      STANDING[this.currentDirection][0],
+      STANDING[this.currentDirection][1],
       this.width,
       this.height,
       this.position[0],
@@ -606,7 +599,6 @@ class Link {
     this.attack(e);
     this.move(e);
   }
-
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Link);
@@ -621,21 +613,21 @@ class Link {
 //
 // const directions = ["walkRight", "walkLeft", "walkDown", "walkUp"]
 //
-// const dir_hash_y = {
+// const WALK_Y = {
 //   "walkRight": 120,
 //   "walkLeft": 30,
 //   "walkDown": 30,
 //   "walkUp": 120,
 // }
 //
-// const dir_hash_x = {
+// const WALK_X = {
 //   "walkRight": [241, 271, 301, 331, 361, 391],
 //   "walkLeft": [241, 271, 301, 331, 361, 391],
 //   "walkDown": [0, 30, 60, 90, 120, 150, 180, 210],
 //   "walkUp": [0, 30, 60, 90, 120, 150, 180, 210],
 // }
 //
-// const standing = [
+// const STANDING = [
 //   [331, 120],
 //   [151, 0],
 //   [31, 0],
@@ -653,7 +645,7 @@ class Link {
 //
 // function drawFrame(direction, frameX, frameY, canvasX, canvasY) {
 //   ctx.drawImage(
-//     link, dir_hash_x[direction][frameX], dir_hash_y[direction], width, height, canvasX, canvasY, scaledWidth, scaledHeight);
+//     link, WALK_X[direction][frameX], WALK_Y[direction], width, height, canvasX, canvasY, scaledWidth, scaledHeight);
 // }
 //
 // let currentLoopIndex = 0;
@@ -673,7 +665,7 @@ class Link {
 //     return
 //   }
 //
-//   let numFrames = dir_hash_x[directions[currentDirection]].length
+//   let numFrames = WALK_X[directions[currentDirection]].length
 //   let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
 //   frameCount ++
 //   if (frameCount < 4) {
@@ -682,7 +674,7 @@ class Link {
 //   }
 //   frameCount = 0;
 //   ctx.clearRect(0, 0, canvas.width, canvas.height)
-//   drawFrame(directions[currentDirection], cycleLoop[currentLoopIndex], dir_hash_y[directions[currentDirection]], canvasX, canvasY, 80, 100);
+//   drawFrame(directions[currentDirection], cycleLoop[currentLoopIndex], WALK_Y[directions[currentDirection]], canvasX, canvasY, 80, 100);
 //   currentLoopIndex++;
 //   if (currentLoopIndex >= cycleLoop.length) {
 //     currentLoopIndex = 0;
@@ -714,7 +706,7 @@ class Link {
 //   moving = false
 //   ctx.clearRect(0, 0, canvas.width, canvas.height)
 //   ctx.drawImage(
-//     link, standing[currentDirection][0], standing[currentDirection][1], width, height, canvasX, canvasY, scaledWidth, scaledHeight
+//     link, STANDING[currentDirection][0], STANDING[currentDirection][1], width, height, canvasX, canvasY, scaledWidth, scaledHeight
 //   );
 // }
 //
