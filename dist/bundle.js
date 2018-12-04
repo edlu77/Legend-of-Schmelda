@@ -96,17 +96,19 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 class Enemy {
-  constructor(canvas, ctx) {
-    this.position = [300, 300];
+  constructor(canvas, ctx, pos, dir_idx) {
+    this.position = pos;
     this.ctx = ctx
-    this.width = 50;
-    this.height = 50;
+    this.width = 30;
+    this.height = 30;
     this.move = this.move.bind(this)
     this.draw = this.draw.bind(this)
     this.canvas = canvas;
     this.life = 3;
-    this.speed = 2;
+    this.speed = 1;
     this.destroyed = false;
+    this.currentDirection = dir_idx;
+    this.entered = false;
   }
 
   recoil(attackedSide) {
@@ -131,7 +133,9 @@ class Enemy {
     }
   }
 
-  draw() {
+  draw(player) {
+    this.ctx.clearRect(this.position[0]-2, this.position[1]-2, this.width+4, this.height+4)
+
     this.ctx.beginPath();
     this.ctx.rect(this.position[0], this.position[1], this.width, this.height)
     this.ctx.fillStyle = 'black';
@@ -139,14 +143,40 @@ class Enemy {
     this.ctx.lineWidth = 1
     this.ctx.strokeStyle = 'yellow';
     this.ctx.stroke();
-    this.move()
+    this.move(player)
   }
 
-  move() {
-    this.position[0] += this.speed;
-    if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
-      this.speed = this.speed*-1
+  move(player) {
+    // if (this.currentDirection === 0) {
+    //   this.position[0] += this.speed;
+    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
+    //     this.currentDirection = 1
+    //   }
+    // } else if (this.currentDirection === 1) {
+    //   this.position[0] -= this.speed;
+    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
+    //     this.currentDirection = 0
+    //   }
+    // }
+    this.moveTowardsObject(player)
+
+  }
+
+  moveTowardsObject(object) {
+    if (object.position[0] < this.position[0]) {
+      this.position[0] -= this.speed
     }
+    if (object.position[1] < this.position[1]) {
+      this.position[1] -= this.speed
+    }
+    if (object.position[0] > this.position[0]) {
+      this.position[0] += this.speed
+    }
+    if (object.position[1] > this.position[1]) {
+      this.position[1] += this.speed
+    }
+
+
   }
 
   hitbox() {
@@ -181,36 +211,41 @@ __webpack_require__.r(__webpack_exports__);
 
 class Game {
   constructor(canvas, ctx) {
-    this.enemy = new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](canvas, ctx);
     this.enemies = [];
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_1__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
     this.draw = this.draw.bind(this);
+    this.makeEnemy = this.makeEnemy.bind(this)
+  }
+
+  loop() {
+    this.draw()
+    setInterval(this.makeEnemy, 1000)
   }
 
   draw() {
-    if (this.enemy.isAlive()) {
-      this.enemy.draw();
-      this.link.draw();
-      if (this.link.collidedWith(this.enemy)) {
-        // this.link.recoil();
+    this.link.draw();
+    this.enemies.forEach ((enemy) => {
+      enemy.draw(this.link);
+      if (this.link.collidedWith(enemy)) {
+        // this.link.recoil(this.link.oppositeDirection);
         console.log("ouch!")
       }
-      if (this.link.attackedObject(this.enemy)) {
-        this.enemy.recoil(this.link.currentDirection);
-        this.enemy.life -= 1
+      if (this.link.attackedObject(enemy)) {
+        enemy.recoil(this.link.currentDirection);
+        enemy.life -= 1
       }
-    } else {
-      this.link.draw();
-    }
+    })
 
     window.requestAnimationFrame(this.draw)
   }
 
   makeEnemy() {
-    this.enemies.push(new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx));
-
+    if (this.enemies.length < 1) {
+      this.enemies.push(new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, [this.canvas.width+50, Math.random()*this.canvas.height], 0));
+      console.log(this.enemies.length)
+    }
   }
 
 }
@@ -265,21 +300,28 @@ const attack_y = {
   "attackRight": [180, 180, 180, 180, 175],
   "attackLeft": [90, 90, 90, 90, 84],
   "attackDown": [90, 90, 86, 86, 86, 86],
-  "attackUp": [174, 178, 175, 176, 175],
+  "attackUp": [174, 177, 174, 177, 180],
 }
 
 const ATTACK_WIDTHS = {
   "attackRight": [18, 26, 31, 28, 23],
   "attackLeft": [18, 26, 31, 28, 23],
   "attackDown": [21, 22, 21, 20, 28, 33],
-  "attackUp": [21, 21, 21, 33, 35],
+  "attackUp": [21, 21, 21, 24, 35],
+}
+
+const ATTACK_HEIGHTS = {
+  "attackRight": [23, 24, 22, 22, 31],
+  "attackLeft": [23, 24, 22, 22, 31],
+  "attackDown": [23, 24, 31, 31, 29, 27],
+  "attackUp": [22, 30, 35, 30, 23],
 }
 
 const ATTACK_POS_OFFSET = {
   "attackRight": [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
   "attackLeft": [[-2, 0], [-10, 0], [-13, 0], [-13, 0], [-7, 0]],
   "attackDown": [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
-  "attackUp": [[0, 0], [0, -6], [0, -6], [-4, -6], [-12, -1]],
+  "attackUp": [[0, 0], [0, -7], [0, -8], [-4, -6], [-12, -1]],
 }
 
 class Link {
@@ -290,7 +332,7 @@ class Link {
     this.link.src = './assets/link_sprites.png';
     this.width = 20;
     this.height = 25;
-    this.scale = 4;
+    this.scale = 2;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
     this.currentLoopIndex = 0;
@@ -330,24 +372,24 @@ class Link {
       }
     } else if (this.currentDirection === 1) {
       return {
-        x: this.position[0] - 4*this.scale,
+        x: this.position[0] - 8*this.scale,
         y: this.position[1],
-        width: 4*this.scale,
+        width: 8*this.scale,
         height: this.scaledHeight,
       }
     } else if (this.currentDirection === 2) {
       return {
         x: this.position[0],
         y: this.position[1] + this.scaledHeight,
-        width: this.scaledWidth + 4.5*this.scale,
-        height: 8*this.scale,
+        width: this.scaledWidth,
+        height: 7*this.scale,
       }
     } else {
       return {
         x: this.position[0],
-        y: this.position[1] - 5*this.scale,
-        width: this.scaledWidth + 4.5*this.scale,
-        height: 5*this.scale,
+        y: this.position[1] - 6*this.scale,
+        width: this.scaledWidth,
+        height: 6*this.scale,
       }
     }
   }
@@ -383,14 +425,38 @@ class Link {
   }
 
 
-  recoil() {
-    this.position = [this.position[0] - 50, this.position[1] - 50]
+  recoil(attackedSide) {
+    this.ctx.fillStyle = 'red';
+    this.ctx.fill();
+    if (attackedSide === 0) {
+      this.position = [this.position[0] + 70, this.position[1]]
+    } else if (attackedSide === 1) {
+      this.position = [this.position[0] - 70, this.position[1]]
+    } else if (attackedSide === 2) {
+      this.position = [this.position[0], this.position[1] + 70]
+    } else {
+      this.position = [this.position[0], this.position[1] - 70]
+    }
+  }
+
+  oppositeDirection() {
+    switch (this.currentDirection) {
+      case 0:
+        return 1;
+      case 1:
+        return 0;
+      case 2:
+        return 3;
+      case 3:
+        return 2;
+    }
   }
 
   //moving
 
   drawWalkFrame(direction, frameX, frameY) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
+
     this.ctx.drawImage(
       this.link,
       dir_hash_x[direction][frameX],
@@ -420,6 +486,7 @@ class Link {
         return;
       }
       this.frameCount = 0;
+
       this.drawWalkFrame(
         directions[this.currentDirection],
         cycleLoop[this.currentLoopIndex],
@@ -456,25 +523,20 @@ class Link {
   //attacking
 
   drawAttackFrame(direction, frame) {
-    let attackWidth = ATTACK_WIDTHS[direction][frame]
-    let attackHeight;
-    if (direction === "attackDown"){
-      attackHeight = 30;
-    } else if (direction === "attackUp") {
-      attackHeight = 35;
-    } else {
-      attackHeight = 30;
-    }
-
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    let attackPosX = this.position[0] + ATTACK_POS_OFFSET[direction][frame][0]*this.scale;
+    let attackPosY = this.position[1] + ATTACK_POS_OFFSET[direction][frame][1]*this.scale;
+    let attackWidth = ATTACK_WIDTHS[direction][frame]
+    let attackHeight = ATTACK_HEIGHTS[direction][frame];
+
     this.ctx.drawImage(
       this.link,
       attack_x[direction][frame],
       attack_y[direction][frame],
       attackWidth,
       attackHeight,
-      this.position[0] + ATTACK_POS_OFFSET[direction][frame][0]*this.scale,
-      this.position[1] + ATTACK_POS_OFFSET[direction][frame][1]*this.scale,
+      attackPosX,
+      attackPosY,
       attackWidth*this.scale,
       attackHeight*this.scale,
     )
@@ -489,24 +551,24 @@ class Link {
     if (this.attacking === true) {
       let numFrames = attack_x[attack_directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
-
-      this.attackFrameCount++
-      if (this.attackFrameCount < 2) {
-        return;
+      while (this.currentAttackLoopIndex < cycleLoop.length) {
+        this.attackFrameCount++
+        if (this.attackFrameCount < 4) {
+          return;
+        }
+        this.attackFrameCount = 0;
+        this.drawAttackFrame(
+          attack_directions[this.currentDirection],
+          cycleLoop[this.currentAttackLoopIndex],
+        ),
+        console.log(numFrames)
+        console.log(cycleLoop)
+        console.log(this.currentAttackLoopIndex)
+        this.currentAttackLoopIndex++;
       }
-      this.attackFrameCount = 0;
-
-      this.drawAttackFrame(
-        attack_directions[this.currentDirection],
-        cycleLoop[this.currentAttackLoopIndex],
-        cycleLoop[this.currentAttackLoopIndex],
-      ),
-      this.currentAttackLoopIndex++;
-      if (this.currentAttackLoopIndex >= cycleLoop.length) {
-        this.currentAttackLoopIndex = 0;
-        this.attacking = false;
-        this.walking = true;
-      }
+      this.currentAttackLoopIndex = 0;
+      this.walking = true;
+      this.attacking = false;
     }
   }
 
@@ -678,8 +740,9 @@ __webpack_require__.r(__webpack_exports__);
 document.addEventListener('DOMContentLoaded', ()=> {
   const mainCanvas = document.getElementById('main-window');
   const ctx = mainCanvas.getContext('2d');
+
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
-  game.draw();
+  game.loop();
   document.onkeydown = game.link.combineCallbacks;
 });
 
