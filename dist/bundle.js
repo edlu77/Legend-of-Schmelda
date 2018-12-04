@@ -105,7 +105,7 @@ class Enemy {
     this.draw = this.draw.bind(this)
     this.canvas = canvas;
     this.life = 3;
-    this.speed = .5;
+    this.speed = Math.random()*.75;
     this.currentDirection = 0;
     this.entered = false;
   }
@@ -176,8 +176,6 @@ class Enemy {
       this.position[1] += this.speed;
       this.currentDirection = 3;
     }
-
-
   }
 
   hitbox() {
@@ -188,6 +186,36 @@ class Enemy {
       height: this.height,
     }
   };
+
+  collidedWith(object) {
+    let enemyHit = this.hitbox()
+    let objectHit = object.hitbox()
+    if (
+      enemyHit.x < objectHit.x + objectHit.width &&
+      enemyHit.x + enemyHit.width > objectHit.x &&
+      enemyHit.y < objectHit.y + objectHit.height &&
+      enemyHit.y + enemyHit.height > objectHit.y
+      ) {
+        return true
+      } else {
+        return false
+    }
+  };
+
+  moveAwayFromObject(object) {
+    if (object.position[0] < this.position[0]) {
+      this.position[0] += this.speed;
+    }
+    if (object.position[1] < this.position[1]) {
+      this.position[1] += this.speed;
+    }
+    if (object.position[0] > this.position[0]) {
+      this.position[0] -= this.speed;
+    }
+    if (object.position[1] > this.position[1]) {
+      this.position[1] -= this.speed;
+    }
+  }
 
 }
 
@@ -218,15 +246,11 @@ class Game {
     this.canvas = canvas;
     this.draw = this.draw.bind(this);
     this.makeEnemy = this.makeEnemy.bind(this)
-    this.gameOver = this.gameOver.bind(this)
-  }
-
-  loop() {
-    this.draw();
-    setInterval(this.makeEnemy, 3000)
   }
 
   draw() {
+    setInterval(this.makeEnemy, 3000)
+    this.avoidOverlap();
     this.clearDead();
     this.gameOver();
     this.link.draw();
@@ -275,8 +299,18 @@ class Game {
     }
   }
 
+  avoidOverlap() {
+    for (let i = 0; i < this.enemies.length-1; i++) {
+      for (let j = i+1; j < this.enemies.length; j++) {
+        if (this.enemies[i].collidedWith(this.enemies[j])) {
+          this.enemies[i].moveAwayFromObject(this.enemies[j])
+          this.enemies[j].moveAwayFromObject(this.enemies[i])
+        }
+      }
+    }
+  }
+
   gameOver() {
-    debugger
     if (this.link.life === 0) {
       console.log("You have died!")
     }
@@ -366,7 +400,7 @@ class Link {
     this.link.src = './assets/link_sprites.png';
     this.width = 20;
     this.height = 25;
-    this.scale = 3;
+    this.scale = 1.5;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
     this.currentLoopIndex = 0;
@@ -381,11 +415,11 @@ class Link {
     this.stunned = false;
     this.invincible = false;
 
-    this.step = this.step.bind(this);
+    // this.step = this.step.bind(this);
     this.move = this.move.bind(this);
     this.stopWalking = this.stopWalking.bind(this);
     this.attack = this.attack.bind(this);
-    // this.combineCallbacks = this.combineCallbacks.bind(this);
+    this.combineCallbacks = this.combineCallbacks.bind(this);
   };
 
   hitbox() {
@@ -472,11 +506,12 @@ class Link {
   }
 
   damaged() {
+    this.walking = false;
     this.stunned = true;
     this.invincible = true;
     console.log("stunned")
-    setTimeout(() => {this.stunned = false;}, 300)
-    setTimeout(() => {this.invincible = false;}, 2000)
+    setTimeout(() => {this.stunned = false;}, 500) //stunned after hit
+    setTimeout(() => {this.invincible = false;}, 2000) //invincible for short time after getting hit
   }
 
   oppositeDirection() {
@@ -590,29 +625,32 @@ class Link {
     // this.ctx.lineWidth = 1
     // this.ctx.strokeStyle = 'yellow';
     // this.ctx.stroke();
+
+
   };
 
   swing() {
     if (this.attacking === true) {
       let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
-      while (this.currentAttackLoopIndex < cycleLoop.length) {
+      while (this.currentAttackLoopIndex <= cycleLoop.length) {
         this.attackFrameCount++
         if (this.attackFrameCount < 5) {
           return;
         }
         this.attackFrameCount = 0;
+        if (this.currentAttackLoopIndex === cycleLoop.length) {
+          break;
+        }
         this.drawAttackFrame(
           attack_directions[this.currentDirection],
           cycleLoop[this.currentAttackLoopIndex],
         ),
         this.currentAttackLoopIndex++;
-        if (this.currentAttackLoopIndex >= cycleLoop.length) {
-          this.currentAttackLoopIndex = 0;
-          this.walking = false;
-          this.attacking = false;
-        }
       }
+      this.currentAttackLoopIndex = 0;
+      this.walking = false;
+      this.attacking = false;
     }
   }
 
@@ -620,8 +658,10 @@ class Link {
     if (this.stunned) {
       return;
     }
-    this.walking = false;
-    this.attacking = true;
+    if(e.key === "h") {
+      this.walking = false;
+      this.attacking = true;
+    }
   }
 
   stand() {
@@ -641,16 +681,32 @@ class Link {
     }
   }
 
+  preventOffscreen() {
+    if (this.position[0] < 0) {
+      this.position[0] = 0
+    }
+    if (this.position[0] + this.scaledWidth > this.canvas.width) {
+      this.position[0] = this.canvas.width - this.scaledWidth
+    }
+    if (this.position[1] < 0) {
+      this.position[1] = 0
+    }
+    if (this.position[1] + this.scaledHeight > this.canvas.height) {
+      this.position[1] = this.canvas.height - this.scaledHeight
+    }
+  }
+
   stopWalking(e) {
     this.walking = false;
   }
 
-  // combineCallbacks(e) {
-  //   this.attack(e);
-  //   this.move(e);
-  // }
+  combineCallbacks(e) {
+    this.attack(e);
+    this.move(e);
+  }
 
   draw() {
+    this.preventOffscreen();
     this.swing();
     this.step();
     this.stand();
@@ -679,9 +735,9 @@ document.addEventListener('DOMContentLoaded', ()=> {
   const ctx = mainCanvas.getContext('2d');
 
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
-  game.loop();
-  document.onclick = game.link.attack;
-  document.onkeydown = game.link.move;
+  game.draw();
+  // document.onclick = game.link.attack;
+  document.onkeydown = game.link.combineCallbacks;
   document.onkeyup = game.link.stopWalking;
 });
 
