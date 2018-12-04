@@ -106,14 +106,11 @@ class Enemy {
     this.canvas = canvas;
     this.life = 3;
     this.speed = .5;
-    this.destroyed = false;
     this.currentDirection = 0;
     this.entered = false;
   }
 
   recoil(attackedSide) {
-    this.ctx.fillStyle = 'red';
-    this.ctx.fill();
     if (attackedSide === 0) {
       this.position = [this.position[0] + 50, this.position[1]]
     } else if (attackedSide === 1) {
@@ -123,12 +120,12 @@ class Enemy {
     } else {
       this.position = [this.position[0], this.position[1] - 50]
     }
+    this.ctx.fillStyle = 'red';
+    this.ctx.fill();
   }
 
-  isAlive() {
+  isDead() {
     if (this.life === 0) {
-      return false
-    } else {
       return true
     }
   }
@@ -221,23 +218,26 @@ class Game {
     this.canvas = canvas;
     this.draw = this.draw.bind(this);
     this.makeEnemy = this.makeEnemy.bind(this)
+    this.gameOver = this.gameOver.bind(this)
   }
 
   loop() {
-    this.draw()
+    this.draw();
     setInterval(this.makeEnemy, 3000)
   }
 
   draw() {
+    this.clearDead();
+    this.gameOver();
     this.link.draw();
     for (let i = 0; i < this.enemies.length; i++) {
-      if (this.enemies[i].life === 0) {
-        continue;
-      }
       this.enemies[i].draw(this.link);
-      if (this.link.collidedWith(this.enemies[i])) {
+      if (this.link.collidedWith(this.enemies[i]) && this.link.invincible === false) {
         this.link.recoil(this.enemies[i].currentDirection);
-        console.log("ouch!")
+        this.link.life -= 1;
+        this.link.damaged();
+        console.log(this.link.life)
+        console.log("ouch!");
       }
       if (this.link.attackedObject(this.enemies[i])) {
         this.enemies[i].recoil(this.link.currentDirection);
@@ -248,10 +248,18 @@ class Game {
   }
 
   makeEnemy() {
-    if (this.enemies.length < 100) {
+    if (this.enemies.length < 5) {
       this.enemies.push(new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
     }
   }
+
+  clearDead() {
+    for (let i = 0; i < this.enemies.length; i++) {
+      if (this.enemies[i].isDead()) {
+        this.enemies.splice(i, 1);
+      }
+    }
+  };
 
   enemySpawnPos() {
     const wall = Math.floor(Math.random()*4);
@@ -264,6 +272,13 @@ class Game {
         return [Math.random()*this.canvas.width, this.canvas.height+ 50]
       case 3:
         return [Math.random()*this.canvas.width, -50]
+    }
+  }
+
+  gameOver() {
+    debugger
+    if (this.link.life === 0) {
+      console.log("You have died!")
     }
   }
 
@@ -351,24 +366,26 @@ class Link {
     this.link.src = './assets/link_sprites.png';
     this.width = 20;
     this.height = 25;
-    this.scale = 2;
+    this.scale = 3;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
     this.currentLoopIndex = 0;
     this.currentAttackLoopIndex = 0;
-    this.currentDirection = 0;
-    this.position = [0, 0]
+    this.currentDirection = 3;
+    this.position = [this.canvas.width/2 - this.scaledWidth/2, this.canvas.height*.6];
     this.frameCount = 0;
     this.attackFrameCount = 0;
     this.life = 3;
     this.attacking = false;
     this.walking = false;
+    this.stunned = false;
+    this.invincible = false;
 
     this.step = this.step.bind(this);
     this.move = this.move.bind(this);
     this.stopWalking = this.stopWalking.bind(this);
     this.attack = this.attack.bind(this);
-    this.combineCallbacks = this.combineCallbacks.bind(this);
+    // this.combineCallbacks = this.combineCallbacks.bind(this);
   };
 
   hitbox() {
@@ -454,6 +471,14 @@ class Link {
     }
   }
 
+  damaged() {
+    this.stunned = true;
+    this.invincible = true;
+    console.log("stunned")
+    setTimeout(() => {this.stunned = false;}, 300)
+    setTimeout(() => {this.invincible = false;}, 2000)
+  }
+
   oppositeDirection() {
     switch (this.currentDirection) {
       case 0:
@@ -469,12 +494,12 @@ class Link {
 
   //moving
 
-  drawWalkFrame(direction, frameX, frameY) {
+  drawWalkFrame(direction, frame) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
 
     this.ctx.drawImage(
       this.link,
-      WALK_X[direction][frameX],
+      WALK_X[direction][frame],
       WALK_Y[direction],
       this.width,
       this.height,
@@ -513,20 +538,26 @@ class Link {
   };
 
   move(e) {
-    this.walking = true
-    if (e.key === "ArrowLeft") {
+    if (this.stunned) {
+      return
+    }
+    if (e.key === "a") {
+      this.walking = true
       this.attacking = false;
       this.position[0] -= 15;
       this.currentDirection = 1;
-    } else if (e.key === "ArrowRight") {
+    } else if (e.key === "d") {
+      this.walking = true
       this.attacking = false;
       this.position[0] += 15;
       this.currentDirection = 0;
-    } else if (e.key === "ArrowDown") {
+    } else if (e.key === "s") {
+      this.walking = true
       this.attacking = false;
       this.position[1] += 15;
       this.currentDirection = 2;
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === "w") {
+      this.walking = true
       this.attacking = false;
       this.position[1] -= 15;
       this.currentDirection = 3;
@@ -537,7 +568,7 @@ class Link {
   //attacking
 
   drawAttackFrame(direction, frame) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     let attackPosX = this.position[0] + ATTACK_POS_OFFSET[direction][frame][0]*this.scale;
     let attackPosY = this.position[1] + ATTACK_POS_OFFSET[direction][frame][1]*this.scale;
     let attackWidth = ATTACK_WIDTHS[direction][frame]
@@ -567,7 +598,7 @@ class Link {
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
       while (this.currentAttackLoopIndex < cycleLoop.length) {
         this.attackFrameCount++
-        if (this.attackFrameCount < 4) {
+        if (this.attackFrameCount < 5) {
           return;
         }
         this.attackFrameCount = 0;
@@ -576,20 +607,21 @@ class Link {
           cycleLoop[this.currentAttackLoopIndex],
         ),
         this.currentAttackLoopIndex++;
+        if (this.currentAttackLoopIndex >= cycleLoop.length) {
+          this.currentAttackLoopIndex = 0;
+          this.walking = false;
+          this.attacking = false;
+        }
       }
-      this.currentAttackLoopIndex = 0;
-      this.walking = false;
-      this.attacking = false;
     }
   }
 
   attack(e) {
-    if (e.key === "a") {
-      this.walking = false;
-      this.attacking = true;
-    } else {
-      this.attacking = false;
+    if (this.stunned) {
+      return;
     }
+    this.walking = false;
+    this.attacking = true;
   }
 
   stand() {
@@ -613,10 +645,10 @@ class Link {
     this.walking = false;
   }
 
-  combineCallbacks(e) {
-    this.attack(e);
-    this.move(e);
-  }
+  // combineCallbacks(e) {
+  //   this.attack(e);
+  //   this.move(e);
+  // }
 
   draw() {
     this.swing();
@@ -648,7 +680,8 @@ document.addEventListener('DOMContentLoaded', ()=> {
 
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
   game.loop();
-  document.onkeydown = game.link.combineCallbacks;
+  document.onclick = game.link.attack;
+  document.onkeydown = game.link.move;
   document.onkeyup = game.link.stopWalking;
 });
 
