@@ -97,17 +97,10 @@
 __webpack_require__.r(__webpack_exports__);
 class Enemy {
   constructor(canvas, ctx, pos) {
-    this.position = pos;
-    this.ctx = ctx
-    this.width = 30;
-    this.height = 30;
-    this.move = this.move.bind(this)
-    this.draw = this.draw.bind(this)
     this.canvas = canvas;
-    this.life = 3;
-    this.speed = Math.random()*.75;
-    this.currentDirection = 0;
-    this.entered = false;
+    this.ctx = ctx;
+    this.position = pos;
+
   }
 
   recoil(attackedSide) {
@@ -119,64 +112,16 @@ class Enemy {
       this.position = [this.position[0], this.position[1] + 50]
     } else {
       this.position = [this.position[0], this.position[1] - 50]
-    }
+    };
     this.ctx.fillStyle = 'red';
     this.ctx.fill();
-  }
+  };
 
   isDead() {
     if (this.life === 0) {
-      return true
+      return true;
     }
-  }
-
-  draw(player) {
-    this.ctx.clearRect(this.position[0]-2, this.position[1]-2, this.width+4, this.height+4)
-
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0], this.position[1], this.width, this.height)
-    this.ctx.fillStyle = 'black';
-    this.ctx.fill();
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
-    this.move(player)
-  }
-
-  move(player) {
-    // if (this.currentDirection === 0) {
-    //   this.position[0] += this.speed;
-    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
-    //     this.currentDirection = 1
-    //   }
-    // } else if (this.currentDirection === 1) {
-    //   this.position[0] -= this.speed;
-    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
-    //     this.currentDirection = 0
-    //   }
-    // }
-    this.moveTowardsObject(player)
-
-  }
-
-  moveTowardsObject(object) {
-    if (object.position[0] < this.position[0]) {
-      this.position[0] -= this.speed;
-      this.currentDirection = 1;
-    }
-    if (object.position[1] < this.position[1]) {
-      this.position[1] -= this.speed;
-      this.currentDirection = 2;
-    }
-    if (object.position[0] > this.position[0]) {
-      this.position[0] += this.speed;
-      this.currentDirection = 0;
-    }
-    if (object.position[1] > this.position[1]) {
-      this.position[1] += this.speed;
-      this.currentDirection = 3;
-    }
-  }
+  };
 
   hitbox() {
     return {
@@ -190,15 +135,11 @@ class Enemy {
   collidedWith(object) {
     let enemyHit = this.hitbox()
     let objectHit = object.hitbox()
-    if (
-      enemyHit.x < objectHit.x + objectHit.width &&
-      enemyHit.x + enemyHit.width > objectHit.x &&
-      enemyHit.y < objectHit.y + objectHit.height &&
-      enemyHit.y + enemyHit.height > objectHit.y
-      ) {
-        return true
-      } else {
-        return false
+    if (enemyHit.x < objectHit.x + objectHit.width && enemyHit.x + enemyHit.width > objectHit.x
+        && enemyHit.y < objectHit.y + objectHit.height && enemyHit.y + enemyHit.height > objectHit.y) {
+      return true;
+    } else {
+      return false;
     }
   };
 
@@ -215,9 +156,9 @@ class Enemy {
     if (object.position[1] > this.position[1]) {
       this.position[1] -= this.speed;
     }
-  }
+  };
 
-}
+};
 
 /* harmony default export */ __webpack_exports__["default"] = (Enemy);
 
@@ -233,7 +174,7 @@ class Enemy {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _enemy_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./enemy.js */ "./lib/enemy.js");
+/* harmony import */ var _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wallmaster.js */ "./lib/wallmaster.js");
 /* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
 
 
@@ -245,45 +186,60 @@ class Game {
     this.ctx = ctx;
     this.canvas = canvas;
     this.draw = this.draw.bind(this);
-    this.makeEnemy = this.makeEnemy.bind(this)
+    this.makeEnemy = this.makeEnemy.bind(this);
+    this.loop = this.loop.bind(this)
+  }
+
+  loop() {
+    this.update();
+    this.draw();
+    window.requestAnimationFrame(this.loop)
+  }
+
+  update() {
+    this.gameOver();
+    this.avoidOverlap();
+    this.updateEnemies();
   }
 
   draw() {
-    setInterval(this.makeEnemy, 3000)
-    this.avoidOverlap();
-    this.clearDead();
-    this.gameOver();
     this.link.draw();
+    this.drawEnemies();
+  }
+
+  updateEnemies() {
     for (let i = 0; i < this.enemies.length; i++) {
-      this.enemies[i].draw(this.link);
-      if (this.link.collidedWith(this.enemies[i]) && this.link.invincible === false) {
-        this.link.recoil(this.enemies[i].currentDirection);
-        this.link.life -= 1;
-        this.link.damaged();
-        console.log(this.link.life)
-        console.log("ouch!");
+      //clear any dead enemies from the state
+      if (this.enemies[i].isDead()) {
+        this.enemies.splice(i, 1);
       }
-      if (this.link.attackedObject(this.enemies[i])) {
-        this.enemies[i].recoil(this.link.currentDirection);
-        this.enemies[i].life -= 1
+      if (this.enemies[i]) {
+        this.enemies[i].move(this.link);
+        if (this.link.collidedWith(this.enemies[i]) && this.link.invincible === false) {
+          this.link.recoil(this.enemies[i].currentDirection);
+          this.link.life -= 1;
+          this.link.damaged();
+          console.log(this.link.life)
+        }
+        if (this.link.attackedObject(this.enemies[i])) {
+          this.enemies[i].recoil(this.link.currentDirection);
+          this.enemies[i].life -= 1
+        }
       }
     }
-    window.requestAnimationFrame(this.draw)
+  }
+
+  drawEnemies() {
+    for (let i = 0; i < this.enemies.length; i++) {
+      this.enemies[i].draw();
+    }
   }
 
   makeEnemy() {
     if (this.enemies.length < 5) {
-      this.enemies.push(new _enemy_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
+      this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
     }
   }
-
-  clearDead() {
-    for (let i = 0; i < this.enemies.length; i++) {
-      if (this.enemies[i].isDead()) {
-        this.enemies.splice(i, 1);
-      }
-    }
-  };
 
   enemySpawnPos() {
     const wall = Math.floor(Math.random()*4);
@@ -312,7 +268,7 @@ class Game {
 
   gameOver() {
     if (this.link.life === 0) {
-      console.log("You have died!")
+      // console.log("You have died!")
     }
   }
 
@@ -417,9 +373,13 @@ class Link {
 
     // this.step = this.step.bind(this);
     this.move = this.move.bind(this);
+    this.stand = this.stand.bind(this);
+    this.step = this.step.bind(this);
+    this.swing = this.swing.bind(this);
     this.stopWalking = this.stopWalking.bind(this);
     this.attack = this.attack.bind(this);
     this.combineCallbacks = this.combineCallbacks.bind(this);
+    this.draw = this.draw.bind(this);
   };
 
   hitbox() {
@@ -509,7 +469,6 @@ class Link {
     this.walking = false;
     this.stunned = true;
     this.invincible = true;
-    console.log("stunned")
     setTimeout(() => {this.stunned = false;}, 500) //stunned after hit
     setTimeout(() => {this.invincible = false;}, 2000) //invincible for short time after getting hit
   }
@@ -639,6 +598,7 @@ class Link {
           return;
         }
         this.attackFrameCount = 0;
+
         if (this.currentAttackLoopIndex === cycleLoop.length) {
           break;
         }
@@ -710,6 +670,7 @@ class Link {
     this.swing();
     this.step();
     this.stand();
+
   };
 }
 
@@ -735,11 +696,126 @@ document.addEventListener('DOMContentLoaded', ()=> {
   const ctx = mainCanvas.getContext('2d');
 
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
-  game.draw();
+  setInterval(game.makeEnemy, 3000)
+  game.loop();
   // document.onclick = game.link.attack;
   document.onkeydown = game.link.combineCallbacks;
   document.onkeyup = game.link.stopWalking;
 });
+
+
+/***/ }),
+
+/***/ "./lib/wallmaster.js":
+/*!***************************!*\
+  !*** ./lib/wallmaster.js ***!
+  \***************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _enemy__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./enemy */ "./lib/enemy.js");
+
+
+const WALLMASTER_SPRITES = [
+  [281, 883, 23, 23],
+  [323, 883, 23, 23]
+]
+
+class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
+  constructor(canvas, ctx, pos) {
+    super(canvas, ctx, pos);
+    this.wallmaster = new Image();
+    this.wallmaster.src = './assets/enemies.png';
+    this.currentLoopIndex = 0;
+    this.walkCycle = 0;
+    this.frameCount = -1;
+    this.life = 3;
+    this.scale = 1.5;
+    this.speed = Math.random()*.7;
+    this.move = this.move.bind(this);
+    this.draw = this.draw.bind(this);
+  }
+
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: 23*this.scale,
+      height: 23*this.scale,
+    }
+  };
+
+  moveTowardsObject(object) {
+    if (object.position[0] < this.position[0]) {
+      this.position[0] -= this.speed;
+      this.currentDirection = 1;
+    }
+    if (object.position[1] < this.position[1]) {
+      this.position[1] -= this.speed;
+      this.currentDirection = 2;
+    }
+    if (object.position[0] > this.position[0]) {
+      this.position[0] += this.speed;
+      this.currentDirection = 0;
+    }
+    if (object.position[1] > this.position[1]) {
+      this.position[1] += this.speed;
+      this.currentDirection = 3;
+    }
+  }
+
+  move(player) {
+    // if (this.currentDirection === 0) {
+    //   this.position[0] += this.speed;
+    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
+    //     this.currentDirection = 1
+    //   }
+    // } else if (this.currentDirection === 1) {
+    //   this.position[0] -= this.speed;
+    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
+    //     this.currentDirection = 0
+    //   }
+    // }
+    this.moveTowardsObject(player)
+  }
+
+  getSprite() {
+    if (this.walkCycle === 0) {
+      return WALLMASTER_SPRITES[0]
+    } else {
+      return WALLMASTER_SPRITES[1]
+    }
+  }
+
+  draw() {
+    this.ctx.clearRect(this.position[0]-2, this.position[1]-2, this.width+4, this.height+4)
+    if (this.frameCount < 9) {
+      this.frameCount++
+    } else {
+      this.walkCycle = (this.walkCycle === 1 ? 0 : 1)
+      this.frameCount = 0;
+    }
+
+    let sprite = this.getSprite();
+
+    this.ctx.drawImage(
+      this.wallmaster,
+      sprite[0],
+      sprite[1],
+      sprite[2],
+      sprite[3],
+      this.position[0],
+      this.position[1],
+      this.scale*sprite[2],
+      this.scale*sprite[3],
+    )
+    // window.requestAnimationFrame(this.draw)
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Wallmaster);
 
 
 /***/ })
