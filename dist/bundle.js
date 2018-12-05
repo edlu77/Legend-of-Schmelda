@@ -659,7 +659,6 @@ class Link {
       return;
     }
     if(e.key === "h") {
-      console.log("swinging sword");
       const swordSoundIdx = Math.floor(Math.random()*2)
       this.swordSwingSounds[swordSoundIdx].play();
       this.walking = false;

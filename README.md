@@ -23,21 +23,21 @@ This project will use Javascript for game logic and HTML5 Canvas to render the i
 # Implementation Timeline
 
 Day 1: Figure out how to render a screen and make sprites move around the map.
-  Learn how to use canvas
-  Animating sprites
-  Control player movement with event listeners
+* Learn how to use canvas
+* Animating sprites
+* Control player movement with event listeners
 
 Day 2: Implement combat.
-  Attacking enemies
-  Enemies that attack you
-  Make various enemy types with different movement patterns.
+* Attacking enemies
+* Enemies that attack you
+* Make various enemy types with different movement patterns.
 
 Day 3: Implement items / abilities.
-  Bow that can shoot arrows at enemies (limited ammo)
-  Bombs
-  Collecting 3 Triforce pieces gives a special ability that clears all enemies from the screen (bonus?)
+* Bow that can shoot arrows at enemies (limited ammo)
+* Bombs
+* Collecting 3 Triforce pieces gives a special ability that clears all enemies from the screen (bonus?)
 
 Day 4: Make the UI
-  Health indicator
-  Currently equipped items
-  Intro and game over screens
+* Health indicator
+* Currently equipped items
+* Intro and game over screens
