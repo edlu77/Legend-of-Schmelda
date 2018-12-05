@@ -148,16 +148,16 @@ class Enemy {
 
   moveAwayFromObject(object) {
     if (object.position[0] < this.position[0]) {
-      this.position[0] += this.speed;
+      this.position[0] += 1;
     }
     if (object.position[1] < this.position[1]) {
-      this.position[1] += this.speed;
+      this.position[1] += 1;
     }
     if (object.position[0] > this.position[0]) {
-      this.position[0] -= this.speed;
+      this.position[0] -= 1;
     }
     if (object.position[1] > this.position[1]) {
-      this.position[1] -= this.speed;
+      this.position[1] -= 1;
     }
   };
 
@@ -191,7 +191,18 @@ class Game {
     this.draw = this.draw.bind(this);
     this.makeEnemy = this.makeEnemy.bind(this);
     this.loop = this.loop.bind(this);
+    this.keys = [];
     this.linkHurtSound = new Audio('./assets/LTTP_Link_Hurt.wav');
+    this.combineListeners();
+  }
+
+
+  combineListeners() {
+    document.addEventListener('keydown', this.link.getMoveKeys);
+    document.addEventListener('keyup', this.link.deleteMoveKeys);
+    document.addEventListener('keydown', this.link.move);
+    document.addEventListener('keydown', this.link.attack);
+    document.addEventListener('keyup', this.link.stopWalking);
   }
 
   loop() {
@@ -375,6 +386,7 @@ class Link {
     this.walking = false;
     this.stunned = false;
     this.invincible = false;
+    this.keys = {};
 
     //sounds
     this.swordSwingSounds = [
@@ -389,7 +401,8 @@ class Link {
     this.swing = this.swing.bind(this);
     this.stopWalking = this.stopWalking.bind(this);
     this.attack = this.attack.bind(this);
-    this.combineCallbacks = this.combineCallbacks.bind(this);
+    this.getMoveKeys = this.getMoveKeys.bind(this);
+    this.deleteMoveKeys = this.deleteMoveKeys.bind(this);
     this.draw = this.draw.bind(this);
     this.invincibility = this.invincibility.bind(this);
   };
@@ -497,17 +510,11 @@ class Link {
       }
       this.frameCount = 0;
 
-      this.ctx.drawImage(
-        this.link,
-        STANDING[this.currentDirection][0],
-        STANDING[this.currentDirection][1],
-        this.width,
-        this.height,
-        this.position[0],
-        this.position[1],
-        this.scaledWidth,
-        this.scaledHeight,
-      );
+      if (this.attacking === true) {
+        this.swing();
+      } else {
+        this.drawStand();
+      }
     }
   }
 
@@ -527,7 +534,7 @@ class Link {
   //moving
 
   drawWalkFrame(direction, frame) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
+
 
     this.ctx.drawImage(
       this.link,
@@ -557,7 +564,7 @@ class Link {
         return;
       }
       this.frameCount = 0;
-
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
       this.drawWalkFrame(
         directions[this.currentDirection],
         cycleLoop[this.currentLoopIndex],
@@ -569,26 +576,36 @@ class Link {
     }
   };
 
+  getMoveKeys(e) {
+    this.keys = (this.keys || []);
+    this.keys[e.keyCode] = true;
+  }
+
+  deleteMoveKeys(e) {
+    this.keys[e.keyCode] = false;
+  }
+
   move(e) {
     if (this.stunned) {
       return
     }
-    if (e.key === "a") {
+    console.log(this.keys)
+    if (this.keys[65] === true) {
       this.walking = true
       this.attacking = false;
       this.position[0] -= 15;
       this.currentDirection = 1;
-    } if (e.key === "d") {
+    } if (this.keys[68] === true) {
       this.walking = true
       this.attacking = false;
       this.position[0] += 15;
       this.currentDirection = 0;
-    } if (e.key === "s") {
+    } if (this.keys[83] === true) {
       this.walking = true
       this.attacking = false;
       this.position[1] += 15;
       this.currentDirection = 2;
-    } if (e.key === "w") {
+    } if (this.keys[87] === true) {
       this.walking = true
       this.attacking = false;
       this.position[1] -= 15;
@@ -601,7 +618,7 @@ class Link {
 
   drawAttackFrame(direction, frame) {
 
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
     let attackPosX = this.position[0] + ATTACK_POS_OFFSET[direction][frame][0]*this.scale;
     let attackPosY = this.position[1] + ATTACK_POS_OFFSET[direction][frame][1]*this.scale;
     let attackWidth = ATTACK_WIDTHS[direction][frame]
@@ -642,6 +659,7 @@ class Link {
         if (this.currentAttackLoopIndex === cycleLoop.length) {
           break;
         }
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.drawAttackFrame(
           attack_directions[this.currentDirection],
           cycleLoop[this.currentAttackLoopIndex],
@@ -658,7 +676,7 @@ class Link {
     if (this.stunned || this.attacking === true) {
       return;
     }
-    if(e.key === "h") {
+    if(this.keys[72] === true) {
       const swordSoundIdx = Math.floor(Math.random()*2)
       this.swordSwingSounds[swordSoundIdx].play();
       this.walking = false;
@@ -666,20 +684,25 @@ class Link {
     }
   }
 
+  drawStand() {
+
+    this.ctx.drawImage(
+      this.link,
+      STANDING[this.currentDirection][0],
+      STANDING[this.currentDirection][1],
+      this.width,
+      this.height,
+      this.position[0],
+      this.position[1],
+      this.scaledWidth,
+      this.scaledHeight,
+    );
+  }
+
   stand() {
     if ((this.walking || this.attacking) === false) {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-      this.ctx.drawImage(
-        this.link,
-        STANDING[this.currentDirection][0],
-        STANDING[this.currentDirection][1],
-        this.width,
-        this.height,
-        this.position[0],
-        this.position[1],
-        this.scaledWidth,
-        this.scaledHeight,
-      );
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.drawStand();
     }
   }
 
@@ -700,11 +723,6 @@ class Link {
 
   stopWalking(e) {
     this.walking = false;
-  }
-
-  combineCallbacks(e) {
-    this.attack(e);
-    this.move(e);
   }
 
   draw() {
@@ -740,9 +758,15 @@ document.addEventListener('DOMContentLoaded', ()=> {
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
   setInterval(game.makeEnemy, 3000)
   game.loop();
-  // document.onclick = game.link.attack;
-  document.onkeydown = game.link.combineCallbacks;
-  document.onkeyup = game.link.stopWalking;
+
+  // let keys = [];
+  // document.addEventListener('keydown', function (e) {
+  //   keys = (keys || []);
+  //   keys[e.keyCode] = true;
+  // })
+  // document.addEventListener('keyup', function (e) {
+  //   keys[e.keyCode] = false;
+  // })
 });
 
 
