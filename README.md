@@ -4,13 +4,17 @@
 
 Legend of Schmelda is a 2-D combat game based on Legend of Zelda. The player controls a hero who will fight off waves of enemies that grow progressively more difficult. Enemies can also drop items that give the player abilities to help in the fight.
 
+# Controls
+
+WASD to move around the screen
+H to swing the sword
+
 # MVPs
 
 1) Move around different areas of the screen
 2) Enemies that can attack you and vice versa
 3) Items / Powerups
 4) User interface
-
 
 # Technologies
 
