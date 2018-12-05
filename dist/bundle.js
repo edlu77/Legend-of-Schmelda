@@ -380,6 +380,7 @@ class Link {
     this.attack = this.attack.bind(this);
     this.combineCallbacks = this.combineCallbacks.bind(this);
     this.draw = this.draw.bind(this);
+    this.invincibility = this.invincibility.bind(this);
   };
 
   hitbox() {
@@ -471,6 +472,30 @@ class Link {
     this.invincible = true;
     setTimeout(() => {this.stunned = false;}, 500) //stunned after hit
     setTimeout(() => {this.invincible = false;}, 2000) //invincible for short time after getting hit
+  }
+
+  invincibility() {
+    if (this.invincible === true) {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+      this.frameCount++
+      if (this.frameCount < 5) {
+        return;
+      }
+      this.frameCount = 0;
+
+      this.ctx.drawImage(
+        this.link,
+        STANDING[this.currentDirection][0],
+        STANDING[this.currentDirection][1],
+        this.width,
+        this.height,
+        this.position[0],
+        this.position[1],
+        this.scaledWidth,
+        this.scaledHeight,
+      );
+    }
   }
 
   oppositeDirection() {
@@ -670,7 +695,7 @@ class Link {
     this.swing();
     this.step();
     this.stand();
-
+    this.invincibility();
   };
 }
 
