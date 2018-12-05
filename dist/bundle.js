@@ -221,7 +221,7 @@ class Game {
         this.enemies[i].move(this.link);
         if (this.link.collidedWith(this.enemies[i]) && this.link.invincible === false) {
           this.linkHurtSound.play();
-          this.link.recoil(this.enemies[i].currentDirection);
+          // this.link.recoil();
           this.link.life -= 1;
           this.link.damaged();
           console.log(this.link.life)
@@ -241,7 +241,7 @@ class Game {
   }
 
   makeEnemy() {
-    if (this.enemies.length < 5) {
+    if (this.enemies.length < 12) {
       this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
     }
   }
@@ -377,7 +377,9 @@ class Link {
     this.invincible = false;
 
     //sounds
-    this.swordSwingSound = new Audio('./assets/LTTP_Sword1.wav');
+    this.swordSwingSounds = [
+      new Audio('./assets/LTTP_Sword1.wav'),
+      new Audio('./assets/LTTP_Sword2.wav')];
     this.enemyHitSound = new Audio('./assets/LTTP_Enemy_Hit.wav');
 
     // this.step = this.step.bind(this);
@@ -474,6 +476,7 @@ class Link {
     } else {
       this.position = [this.position[0], this.position[1] - 70]
     }
+
   }
 
   damaged() {
@@ -575,17 +578,17 @@ class Link {
       this.attacking = false;
       this.position[0] -= 15;
       this.currentDirection = 1;
-    } else if (e.key === "d") {
+    } if (e.key === "d") {
       this.walking = true
       this.attacking = false;
       this.position[0] += 15;
       this.currentDirection = 0;
-    } else if (e.key === "s") {
+    } if (e.key === "s") {
       this.walking = true
       this.attacking = false;
       this.position[1] += 15;
       this.currentDirection = 2;
-    } else if (e.key === "w") {
+    } if (e.key === "w") {
       this.walking = true
       this.attacking = false;
       this.position[1] -= 15;
@@ -597,6 +600,7 @@ class Link {
   //attacking
 
   drawAttackFrame(direction, frame) {
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     let attackPosX = this.position[0] + ATTACK_POS_OFFSET[direction][frame][0]*this.scale;
     let attackPosY = this.position[1] + ATTACK_POS_OFFSET[direction][frame][1]*this.scale;
@@ -625,12 +629,12 @@ class Link {
 
   swing() {
     if (this.attacking === true) {
-      this.swordSwingSound.play();
+
       let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
       while (this.currentAttackLoopIndex <= cycleLoop.length) {
         this.attackFrameCount++
-        if (this.attackFrameCount < 5) {
+        if (this.attackFrameCount < 3) {
           return;
         }
         this.attackFrameCount = 0;
@@ -651,10 +655,13 @@ class Link {
   }
 
   attack(e) {
-    if (this.stunned) {
+    if (this.stunned || this.attacking === true) {
       return;
     }
     if(e.key === "h") {
+      console.log("swinging sword");
+      const swordSoundIdx = Math.floor(Math.random()*2)
+      this.swordSwingSounds[swordSoundIdx].play();
       this.walking = false;
       this.attacking = true;
     }
@@ -769,7 +776,7 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.frameCount = -1;
     this.life = 3;
     this.scale = 1.5;
-    this.speed = Math.random()*.7;
+    this.speed = Math.random()*.8;
     this.move = this.move.bind(this);
     this.draw = this.draw.bind(this);
   }
