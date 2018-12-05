@@ -101,6 +101,8 @@ class Enemy {
     this.ctx = ctx;
     this.position = pos;
 
+    this.enemyDeathSound = new Audio('./assets/LTTP_Enemy_Kill.wav')
+
   }
 
   recoil(attackedSide) {
@@ -119,6 +121,7 @@ class Enemy {
 
   isDead() {
     if (this.life === 0) {
+      this.enemyDeathSound.play();
       return true;
     }
   };
@@ -187,7 +190,8 @@ class Game {
     this.canvas = canvas;
     this.draw = this.draw.bind(this);
     this.makeEnemy = this.makeEnemy.bind(this);
-    this.loop = this.loop.bind(this)
+    this.loop = this.loop.bind(this);
+    this.linkHurtSound = new Audio('./assets/LTTP_Link_Hurt.wav');
   }
 
   loop() {
@@ -216,6 +220,7 @@ class Game {
       if (this.enemies[i]) {
         this.enemies[i].move(this.link);
         if (this.link.collidedWith(this.enemies[i]) && this.link.invincible === false) {
+          this.linkHurtSound.play();
           this.link.recoil(this.enemies[i].currentDirection);
           this.link.life -= 1;
           this.link.damaged();
@@ -371,6 +376,10 @@ class Link {
     this.stunned = false;
     this.invincible = false;
 
+    //sounds
+    this.swordSwingSound = new Audio('./assets/LTTP_Sword1.wav');
+    this.enemyHitSound = new Audio('./assets/LTTP_Enemy_Hit.wav');
+
     // this.step = this.step.bind(this);
     this.move = this.move.bind(this);
     this.stand = this.stand.bind(this);
@@ -448,6 +457,7 @@ class Link {
       swordHit.y < objectHit.y + objectHit.height &&
       swordHit.y + swordHit.height > objectHit.y
       ) {
+        this.enemyHitSound.play();
         return true
       } else {
         return false
@@ -615,6 +625,7 @@ class Link {
 
   swing() {
     if (this.attacking === true) {
+      this.swordSwingSound.play();
       let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
       while (this.currentAttackLoopIndex <= cycleLoop.length) {
