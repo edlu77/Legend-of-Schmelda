@@ -86,6 +86,107 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./lib/arrow.js":
+/*!**********************!*\
+  !*** ./lib/arrow.js ***!
+  \**********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+const ARROW_SPRITES = [
+  [194, 354, 15, 5],
+  [194, 354, 15, 5],
+  [401, 104, 5, 15],
+  [395, 344, 5, 15],
+] //left(invert), right, down, up
+
+class Arrow {
+  constructor(canvas, ctx, pos, direction) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    this.position = pos;
+    this.scale = 1;
+    this.arrow = new Image();
+    this.arrow.src = './assets/link-2.gif';
+    this.direction = direction;
+    this.move = this.move.bind(this);
+    this.draw = this.draw.bind(this);
+    this.width = (this.direction === 0 || this.direction === 1) ? 15 : 5;
+    this.height = (this.direction === 1 || this.direction === 0) ? 5 : 15;
+  }
+
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: this.width,
+      height: this.height,
+    }
+  };
+
+  collidedWith(object) {
+    let enemyHit = this.hitbox()
+    let objectHit = object.hitbox()
+    if (enemyHit.x < objectHit.x + objectHit.width && enemyHit.x + enemyHit.width > objectHit.x
+        && enemyHit.y < objectHit.y + objectHit.height && enemyHit.y + enemyHit.height > objectHit.y) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  getSprite() {
+    return ARROW_SPRITES[this.direction]
+  }
+
+  move() {
+    if (this.direction === 0) {
+      this.position[0] += 10;
+    } else if (this.direction === 1) {
+      this.position[0] -= 10;
+    } else if (this.direction === 2) {
+      this.position[1] += 10;
+    } else {
+      this.position[1] -= 10;
+    }
+  }
+
+  draw() {
+    let sprite = this.getSprite();
+    this.ctx.clearRect(this.position[0], this.position[1], this.width, this.height)
+    this.ctx.drawImage(
+      this.arrow,
+      sprite[0],
+      sprite[1],
+      sprite[2],
+      sprite[3],
+      this.position[0],
+      this.position[1],
+      this.scale*sprite[2],
+      this.scale*sprite[3],
+    )
+  }
+
+  isOffscreen() {
+    if (
+      this.position[0] > this.canvas.width ||
+      this.position[0] + this.width < 0 ||
+      this.position[1] + this.height < 0 ||
+      this.position[1] > this.canvas.height) {
+      return true
+    } else {
+      return false
+    }
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Arrow);
+
+
+/***/ }),
+
 /***/ "./lib/enemy.js":
 /*!**********************!*\
   !*** ./lib/enemy.js ***!
@@ -179,6 +280,8 @@ class Enemy {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wallmaster.js */ "./lib/wallmaster.js");
 /* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
+/* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
+
 
 
 
@@ -189,11 +292,16 @@ class Game {
     this.ctx = ctx;
     this.canvas = canvas;
     this.draw = this.draw.bind(this);
-    this.makeEnemy = this.makeEnemy.bind(this);
     this.loop = this.loop.bind(this);
     this.keys = [];
+    this.arrows = [];
     this.linkHurtSound = new Audio('./assets/LTTP_Link_Hurt.wav');
+    this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
     this.combineListeners();
+    this.makeEnemy = this.makeEnemy.bind(this);
+    this.makeArrow = this.makeArrow.bind(this);
+    setInterval(this.makeEnemy, 3000)
+    // setInterval(this.makeArrow, 500)
   }
 
 
@@ -202,6 +310,7 @@ class Game {
     document.addEventListener('keyup', this.link.deleteMoveKeys);
     document.addEventListener('keydown', this.link.move);
     document.addEventListener('keydown', this.link.attack);
+    document.addEventListener('keydown', this.link.useBow);
     document.addEventListener('keyup', this.link.stopWalking);
   }
 
@@ -212,14 +321,23 @@ class Game {
   }
 
   update() {
+    this.makeArrow();
     this.gameOver();
     this.avoidOverlap();
     this.updateEnemies();
+    this.updateArrows();
   }
 
   draw() {
     this.link.draw();
     this.drawEnemies();
+    this.drawArrows();
+  }
+
+  makeEnemy() {
+    if (this.enemies.length < 12) {
+      this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
+    }
   }
 
   updateEnemies() {
@@ -241,6 +359,16 @@ class Game {
           this.enemies[i].recoil(this.link.currentDirection);
           this.enemies[i].life -= 1
         }
+        //check for arrow hits
+        for (let j = 0; j < this.arrows.length; j++) {
+          if (this.enemies[i].collidedWith(this.arrows[j])) {
+            this.arrowHitSound.play();
+            this.enemies[i].recoil(this.arrows[j].direction);
+            this.enemies[i].life -= 1;
+            this.arrows.splice(j, 1);
+          }
+        }
+
       }
     }
   }
@@ -251,11 +379,33 @@ class Game {
     }
   }
 
-  makeEnemy() {
-    if (this.enemies.length < 12) {
-      this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
+  makeArrow() {
+    if (this.link.firingBow === true) {
+      const startPos = this.link.position.slice(0);
+      this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
+      this.link.firingBow = false
+      this.link.ammo -= 1
+      console.log(this.link.ammo)
     }
   }
+
+  updateArrows() {
+    for (let i = 0; i < this.arrows.length; i++) {
+      if (this.arrows[i].isOffscreen()) {
+        this.arrows.splice(i, 1);
+      }
+      if (this.arrows[i]) {
+        this.arrows[i].move();
+      }
+    }
+  }
+
+  drawArrows() {
+    for (let i = 0; i < this.arrows.length; i++) {
+      this.arrows[i].draw();
+    }
+  }
+
 
   enemySpawnPos() {
     const wall = Math.floor(Math.random()*4);
@@ -284,10 +434,9 @@ class Game {
 
   gameOver() {
     if (this.link.life === 0) {
-      // console.log("You have died!")
+      console.log("You have died!")
     }
   }
-
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
@@ -379,6 +528,7 @@ class Link {
     this.currentAttackLoopIndex = 0;
     this.currentDirection = 3;
     this.position = [this.canvas.width/2 - this.scaledWidth/2, this.canvas.height*.6];
+    this.keys = {};
     this.frameCount = 0;
     this.attackFrameCount = 0;
     this.life = 3;
@@ -386,12 +536,15 @@ class Link {
     this.walking = false;
     this.stunned = false;
     this.invincible = false;
-    this.keys = {};
+
+    this.firingBow = false;
+    this.ammo = 100;
 
     //sounds
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
       new Audio('./assets/LTTP_Sword2.wav')];
+    this.arrowShootSound = new Audio('./assets/LTTP_Arrow_Shoot.wav');
     this.enemyHitSound = new Audio('./assets/LTTP_Enemy_Hit.wav');
 
     // this.step = this.step.bind(this);
@@ -405,6 +558,8 @@ class Link {
     this.deleteMoveKeys = this.deleteMoveKeys.bind(this);
     this.draw = this.draw.bind(this);
     this.invincibility = this.invincibility.bind(this);
+    this.useBow = this.useBow.bind(this);
+    // this.fireBow = this.fireBow.bind(this);
   };
 
   hitbox() {
@@ -489,7 +644,6 @@ class Link {
     } else {
       this.position = [this.position[0], this.position[1] - 70]
     }
-
   }
 
   damaged() {
@@ -534,8 +688,6 @@ class Link {
   //moving
 
   drawWalkFrame(direction, frame) {
-
-
     this.ctx.drawImage(
       this.link,
       WALK_X[direction][frame],
@@ -586,29 +738,31 @@ class Link {
   }
 
   move(e) {
-    if (this.stunned) {
+    if (this.stunned === true || this.attacking === true) {
       return
     }
-    console.log(this.keys)
     if (this.keys[65] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[0] -= 15;
+      this.position[0] -= 12;
       this.currentDirection = 1;
-    } if (this.keys[68] === true) {
+    }
+    if (this.keys[68] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[0] += 15;
+      this.position[0] += 12;
       this.currentDirection = 0;
-    } if (this.keys[83] === true) {
+    }
+    if (this.keys[83] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[1] += 15;
+      this.position[1] += 12;
       this.currentDirection = 2;
-    } if (this.keys[87] === true) {
+    }
+    if (this.keys[87] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[1] -= 15;
+      this.position[1] -= 12;
       this.currentDirection = 3;
     }
 
@@ -617,8 +771,6 @@ class Link {
   //attacking
 
   drawAttackFrame(direction, frame) {
-
-
     let attackPosX = this.position[0] + ATTACK_POS_OFFSET[direction][frame][0]*this.scale;
     let attackPosY = this.position[1] + ATTACK_POS_OFFSET[direction][frame][1]*this.scale;
     let attackWidth = ATTACK_WIDTHS[direction][frame]
@@ -684,6 +836,20 @@ class Link {
     }
   }
 
+  // fireBow() {
+  //   if (this.firingBow === true) {
+  //
+  //   }
+  // }
+
+  useBow(e) {
+    if (this.keys[66] === true && this.ammo > 0) {
+      console.log("firing bow")
+      this.arrowShootSound.play();
+      this.firingBow = true;
+    }
+  }
+
   drawStand() {
 
     this.ctx.drawImage(
@@ -731,6 +897,7 @@ class Link {
     this.step();
     this.stand();
     this.invincibility();
+    //this.fireBow();
   };
 }
 
@@ -756,17 +923,7 @@ document.addEventListener('DOMContentLoaded', ()=> {
   const ctx = mainCanvas.getContext('2d');
 
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
-  setInterval(game.makeEnemy, 3000)
   game.loop();
-
-  // let keys = [];
-  // document.addEventListener('keydown', function (e) {
-  //   keys = (keys || []);
-  //   keys[e.keyCode] = true;
-  // })
-  // document.addEventListener('keyup', function (e) {
-  //   keys[e.keyCode] = false;
-  // })
 });
 
 
@@ -856,7 +1013,7 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   draw() {
-    this.ctx.clearRect(this.position[0]-2, this.position[1]-2, this.width+4, this.height+4)
+    this.ctx.clearRect(this.position[0], this.position[1], this.width, this.height)
     if (this.frameCount < 9) {
       this.frameCount++
     } else {
@@ -877,7 +1034,6 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
       this.scale*sprite[2],
       this.scale*sprite[3],
     )
-    // window.requestAnimationFrame(this.draw)
   }
 }
 
