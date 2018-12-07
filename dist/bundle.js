@@ -248,15 +248,12 @@ class Enemy {
       let currentFrame = DEATH_POOF[this.poofCurrentLoopIndex]
       let numFrames = 4;
       if (this.poofFrameCount < 5) {
-        console.log(this.poofCurrentLoopIndex)
-
         this.drawDeathPoof(currentFrame),
         this.poofFrameCount++;
         return;
       }
       this.poofFrameCount = 0;
       this.poofCurrentLoopIndex++;
-      console.log(this.poofCurrentLoopIndex)
       if (this.poofCurrentLoopIndex >= numFrames) {
         this.poofing = false;
         this.poofCurrentLoopIndex = 0
@@ -350,6 +347,7 @@ class Game {
     this.oldTime = Date.now();
     this.linkHurtSound = new Audio('./assets/LTTP_Link_Hurt.wav');
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
+    this.score = 0;
 
     this.makeEnemy = this.makeEnemy.bind(this);
     this.makeArrow = this.makeArrow.bind(this);
@@ -400,6 +398,8 @@ class Game {
       //clear any dead enemies from the state
       if (this.enemies[i].isFullyDestroyed() === true) {
         this.enemies.splice(i, 1);
+        this.score++;
+        console.log(`score: ${this.score}`);
       }
       if (this.enemies[i]) {
         this.enemies[i].move(this.link);
@@ -408,7 +408,7 @@ class Game {
           // this.link.recoil();
           this.link.life -= 1;
           this.link.damaged();
-          console.log(this.link.life)
+          console.log(`life: ${this.link.life}`)
         }
         if (this.link.attackedObject(this.enemies[i])) {
           this.enemies[i].life -= 1;
@@ -468,7 +468,7 @@ class Game {
 
         this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_3__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
         this.link.ammo -= 1;
-        console.log(this.link.ammo);
+        console.log(`ammo: ${this.link.ammo}`);
       }
     }
   }
@@ -686,29 +686,29 @@ class Link {
     if (this.currentDirection === 0) {
       return {
         x: this.position[0] + this.scaledWidth,
-        y: this.position[1],
-        width: 8*this.scale,
-        height: this.scaledHeight,
+        y: this.position[1] - 3*this.scale,
+        width: 11*this.scale,
+        height: this.scaledHeight + 6*this.scale,
       }
     } else if (this.currentDirection === 1) {
       return {
-        x: this.position[0] - 8*this.scale,
-        y: this.position[1],
-        width: 8*this.scale,
-        height: this.scaledHeight,
+        x: this.position[0] - 11*this.scale,
+        y: this.position[1] - 3*this.scale,
+        width: 11*this.scale,
+        height: this.scaledHeight + 6*this.scale,
       }
     } else if (this.currentDirection === 2) {
       return {
-        x: this.position[0],
+        x: this.position[0] - 6.5*this.scale,
         y: this.position[1] + this.scaledHeight,
-        width: this.scaledWidth,
-        height: 7*this.scale,
+        width: this.scaledWidth + 13*this.scale,
+        height: 4*this.scale,
       }
     } else {
       return {
-        x: this.position[0],
-        y: this.position[1] - 7*this.scale,
-        width: this.scaledWidth,
+        x: this.position[0] - 7.5*this.scale,
+        y: this.position[1] - 15*this.scale,
+        width: this.scaledWidth + 15*this.scale,
         height: 6*this.scale,
       }
     }
