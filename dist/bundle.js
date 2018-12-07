@@ -100,7 +100,7 @@ const ARROW_SPRITES = [
   [194, 354, 15, 5],
   [401, 104, 5, 15],
   [395, 344, 5, 15],
-] //left(invert), right, down, up
+]
 
 class Arrow {
   constructor(canvas, ctx, pos, direction) {
@@ -155,8 +155,6 @@ class Arrow {
 
   draw() {
     let sprite = this.getSprite();
-    // this.ctx.clearRect(this.position[0], this.position[1], this.hitbox().width, this.hitbox().height)
-    // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.arrow,
       sprite[0],
@@ -197,6 +195,8 @@ class Arrow {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+const ENEMY_KILL_SPRITES = []
+
 class Enemy {
   constructor(canvas, ctx, pos) {
     this.canvas = canvas;
@@ -214,10 +214,9 @@ class Enemy {
       this.position = [this.position[0], this.position[1] + 50]
     } else {
       this.position = [this.position[0], this.position[1] - 50]
-    };
-    this.ctx.fillStyle = 'red';
-    this.ctx.fill();
+    }
   };
+
 
   isDead() {
     if (this.life === 0) {
@@ -278,8 +277,10 @@ class Enemy {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wallmaster.js */ "./lib/wallmaster.js");
-/* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
-/* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
+/* harmony import */ var _moblin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./moblin.js */ "./lib/moblin.js");
+/* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
+/* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
+
 
 
 
@@ -287,7 +288,7 @@ __webpack_require__.r(__webpack_exports__);
 class Game {
   constructor(canvas, ctx) {
     this.enemies = [];
-    this.link = new _link_js__WEBPACK_IMPORTED_MODULE_1__["default"](canvas, ctx);
+    this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
     this.draw = this.draw.bind(this);
@@ -338,7 +339,7 @@ class Game {
 
   makeEnemy() {
     if (this.enemies.length < 12) {
-      this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
+      this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
     }
   }
 
@@ -401,7 +402,7 @@ class Game {
         return
       } else {
 
-        this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
+        this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_3__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
         this.link.ammo -= 1;
         console.log(this.link.ammo);
       }
@@ -772,7 +773,7 @@ class Link {
       }
       this.frameCount = 0;
       this.currentLoopIndex++;
-      // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
+
       this.drawWalkFrame(
         directions[this.currentDirection],
         cycleLoop[this.currentLoopIndex],
@@ -781,7 +782,6 @@ class Link {
         this.currentLoopIndex = 0;
       }
     }
-    this.frameCount = 0;
   };
 
   getMoveKeys(e) {
@@ -869,7 +869,7 @@ class Link {
         if (this.attackCurrentLoopIndex === cycleLoop.length) {
           break;
         }
-        // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
         this.drawAttackFrame(
           attack_directions[this.currentDirection],
           cycleLoop[this.attackCurrentLoopIndex],
@@ -913,7 +913,7 @@ class Link {
       while (this.bowCurrentLoopIndex < numFrames) {
         if (this.bowFrameCount < 8) {
           this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]),
-          this.bowFrameCount++
+          this.bowFrameCount++;
           return;
         }
         this.bowFrameCount = 0;
@@ -921,7 +921,6 @@ class Link {
         if (this.bowCurrentLoopIndex === numFrames) {
           break;
         }
-        // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]);
       }
       this.bowCurrentLoopIndex = 0;
@@ -955,7 +954,6 @@ class Link {
 
   stand() {
     if ((this.walking || this.attacking || this.firingBow) === false) {
-      // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawStand();
     }
   }
@@ -990,6 +988,155 @@ class Link {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Link);
+
+
+/***/ }),
+
+/***/ "./lib/moblin.js":
+/*!***********************!*\
+  !*** ./lib/moblin.js ***!
+  \***********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _enemy__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./enemy */ "./lib/enemy.js");
+
+
+const moblin_directions = ["walkRight", "walkLeft", "walkDown", "walkUp"];
+
+const MOBLIN_SPRITES = {
+  "walkRight": [
+    [160, 0, 24, 26],
+    [160, 40, 24, 26],
+    // [160, 80, 24, 26],
+  ],
+  "walkLeft": [
+    [222, 14, 24, 26],
+    [222, 54, 24, 26],
+    // [222, 94, 24, 26],
+  ],
+  "walkDown": [
+    [124, 0, 17, 32],
+    [124, 38, 17, 32],
+    // [123, 81, 17, 32],
+  ],
+  "walkUp": [
+    [203, 0, 18, 28],
+    [203, 40, 18, 28],
+    // [203, 80, 18, 30],
+  ],
+};
+
+class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
+  constructor(canvas, ctx, pos) {
+    super(canvas, ctx, pos);
+    this.currentDirection = 0;
+    this.moblin = new Image();
+    this.moblin.src = './assets/enemies.png';
+    this.currentLoopIndex = 0;
+    this.frameCount = 0;
+    this.life = 3;
+    this.scale = 2.6;
+    this.speed = .6;
+
+    this.move = this.move.bind(this);
+  }
+
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: 23*this.scale,
+      height: 23*this.scale,
+    }
+  };
+
+  moveTowardsObject(object) {
+    let dx = Math.abs(object.position[0] - this.position[0]);
+    let dy = Math.abs(object.position[1] - this.position[1]);
+
+    if (object.position[0] < this.position[0]) {
+      this.position[0] -= this.speed;
+      if (dx > dy) {
+        this.currentDirection = 1;
+      }
+    }
+    if (object.position[1] < this.position[1]) {
+      this.position[1] -= this.speed;
+      if (dy > dx) {
+        this.currentDirection = 3;
+      }
+    }
+    if (object.position[0] > this.position[0]) {
+      this.position[0] += this.speed;
+      if (dx > dy) {
+        this.currentDirection = 0;
+      }
+    }
+    if (object.position[1] > this.position[1]) {
+      this.position[1] += this.speed;
+      if (dy > dx) {
+        this.currentDirection = 2;
+      }
+    }
+  }
+
+  move(player) {
+    // if (this.currentDirection === 0) {
+    //   this.position[0] += this.speed;
+    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
+    //     this.currentDirection = 1
+    //   }
+    // } else if (this.currentDirection === 1) {
+    //   this.position[0] -= this.speed;
+    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
+    //     this.currentDirection = 0
+    //   }
+    // }
+    this.moveTowardsObject(player)
+  }
+
+  step() {
+    let allFrames = MOBLIN_SPRITES[moblin_directions[this.currentDirection]]
+    let numFrames = allFrames.length;
+    if (this.frameCount < 8) {
+      this.drawWalkFrame(allFrames[this.currentLoopIndex])
+      this.frameCount++;
+      return
+    }
+    this.frameCount = 0;
+    this.currentLoopIndex++;
+    // if (this.currentLoopIndex === numFrames) {
+    //   break;
+    // }
+    if (this.currentLoopIndex >= numFrames) {
+      this.currentLoopIndex = 0;
+    }
+    this.drawWalkFrame(allFrames[this.currentLoopIndex])
+  }
+
+  drawWalkFrame(frame) {
+    this.ctx.drawImage(
+      this.moblin,
+      frame[0],
+      frame[1],
+      frame[2],
+      frame[3],
+      this.position[0],
+      this.position[1],
+      this.scale*frame[2],
+      this.scale*frame[3],
+    )
+  }
+
+  draw() {
+    this.step();
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Moblin);
 
 
 /***/ }),
@@ -1037,6 +1184,7 @@ const WALLMASTER_SPRITES = [
 class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   constructor(canvas, ctx, pos) {
     super(canvas, ctx, pos);
+    this.currentDirection = 0;
     this.wallmaster = new Image();
     this.wallmaster.src = './assets/enemies.png';
     this.currentLoopIndex = 0;
@@ -1053,8 +1201,8 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     return {
       x: this.position[0],
       y: this.position[1],
-      width: 23*this.scale,
-      height: 23*this.scale,
+      width: 24*this.scale,
+      height: 22*this.scale,
     }
   };
 
@@ -1110,8 +1258,6 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
 
     let sprite = this.getSprite();
 
-    // this.ctx.clearRect(this.position[0], this.position[1], this.hitbox().width, this.hitbox().height)
-    // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.wallmaster,
       sprite[0],
