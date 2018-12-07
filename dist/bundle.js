@@ -323,16 +323,17 @@ class Game {
 
   update() {
     this.gameOver();
-    this.avoidOverlap();
     this.updateEnemies();
+    this.avoidOverlap();
     this.updateArrows();
     this.makeArrow();
   }
 
   draw() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.link.draw();
-    this.drawArrows();
     this.drawEnemies();
+    this.drawArrows();
   }
 
   makeEnemy() {
@@ -572,7 +573,7 @@ class Link {
     this.link2.src = './assets/link-2.gif';
     this.width = 20;
     this.height = 25;
-    this.scale = 1.5;
+    this.scale = 2.6;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
     this.currentLoopIndex = 0;
@@ -756,21 +757,26 @@ class Link {
       let numFrames = WALK_X[directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
 
-      this.frameCount++
       if (this.frameCount < 5) {
-        return;
+        this.drawWalkFrame(
+          directions[this.currentDirection],
+          cycleLoop[this.currentLoopIndex],
+        );
+        this.frameCount++
+        return
       }
       this.frameCount = 0;
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
+      this.currentLoopIndex++;
+      // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
       this.drawWalkFrame(
         directions[this.currentDirection],
         cycleLoop[this.currentLoopIndex],
       );
-      this.currentLoopIndex++;
       if (this.currentLoopIndex >= cycleLoop.length) {
         this.currentLoopIndex = 0;
       }
     }
+    this.frameCount = 0;
   };
 
   getMoveKeys(e) {
@@ -789,25 +795,25 @@ class Link {
     if (this.keys[65] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[0] -= 12;
+      this.position[0] -= 15;
       this.currentDirection = 1;
     }
     if (this.keys[68] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[0] += 12;
+      this.position[0] += 15;
       this.currentDirection = 0;
     }
     if (this.keys[83] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[1] += 12;
+      this.position[1] += 15;
       this.currentDirection = 2;
     }
     if (this.keys[87] === true) {
       this.walking = true
       this.attacking = false;
-      this.position[1] -= 12;
+      this.position[1] -= 15;
       this.currentDirection = 3;
     }
 
@@ -844,21 +850,25 @@ class Link {
       let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length;
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
       while (this.attackCurrentLoopIndex <= cycleLoop.length) {
-        this.attackFrameCount++
         if (this.attackFrameCount < 3) {
+          this.drawAttackFrame(
+            attack_directions[this.currentDirection],
+            cycleLoop[this.attackCurrentLoopIndex],
+          );
+          this.attackFrameCount++
           return;
         }
         this.attackFrameCount = 0;
 
+        this.attackCurrentLoopIndex++;
         if (this.attackCurrentLoopIndex === cycleLoop.length) {
           break;
         }
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.drawAttackFrame(
           attack_directions[this.currentDirection],
           cycleLoop[this.attackCurrentLoopIndex],
-        ),
-        this.attackCurrentLoopIndex++;
+        );
       }
       this.attackCurrentLoopIndex = 0;
       this.attacking = false;
@@ -895,20 +905,19 @@ class Link {
     if (this.firingBow === true) {
       let allFrames = BOW_SPRITES[bow_directions[this.currentDirection]]
       let numFrames = allFrames.length
-      while (this.bowCurrentLoopIndex <= numFrames) {
-        this.bowFrameCount++
+      while (this.bowCurrentLoopIndex < numFrames) {
         if (this.bowFrameCount < 8) {
+          this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]),
+          this.bowFrameCount++
           return;
         }
         this.bowFrameCount = 0;
+        this.bowCurrentLoopIndex++;
         if (this.bowCurrentLoopIndex === numFrames) {
           break;
         }
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        this.drawBowFrame(
-          allFrames[this.bowCurrentLoopIndex]
-        ),
-        this.bowCurrentLoopIndex++;
+        // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]);
       }
       this.bowCurrentLoopIndex = 0;
       this.firingBow = false;
@@ -941,7 +950,7 @@ class Link {
 
   stand() {
     if ((this.walking || this.attacking || this.firingBow) === false) {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawStand();
     }
   }
@@ -1016,8 +1025,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 const WALLMASTER_SPRITES = [
-  [281, 883, 23, 23],
-  [323, 883, 23, 23]
+  [280, 883, 24, 22],
+  [318, 883, 24, 22]
 ]
 
 class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
@@ -1029,7 +1038,7 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.walkCycle = 0;
     this.frameCount = -1;
     this.life = 3;
-    this.scale = 1.5;
+    this.scale = 2.6;
     this.speed = Math.random()*.8;
 
     this.move = this.move.bind(this);
@@ -1096,7 +1105,7 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
 
     let sprite = this.getSprite();
 
-    this.ctx.clearRect(this.position[0], this.position[1], this.hitbox().width, this.hitbox().height)
+    // this.ctx.clearRect(this.position[0], this.position[1], this.hitbox().width, this.hitbox().height)
     // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.wallmaster,
