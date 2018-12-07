@@ -96,7 +96,7 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 const ARROW_SPRITES = [
-  [194, 354, 15, 5],
+  [295, 376, 15, 5],
   [194, 354, 15, 5],
   [401, 104, 5, 15],
   [395, 344, 5, 15],
@@ -107,14 +107,14 @@ class Arrow {
     this.canvas = canvas;
     this.ctx = ctx;
     this.position = pos;
-    this.scale = 1;
+    this.scale = 1.5;
     this.arrow = new Image();
     this.arrow.src = './assets/link-2.gif';
     this.direction = direction;
-    this.move = this.move.bind(this);
-    this.draw = this.draw.bind(this);
     this.width = (this.direction === 0 || this.direction === 1) ? 15 : 5;
     this.height = (this.direction === 1 || this.direction === 0) ? 5 : 15;
+
+    this.move = this.move.bind(this);
   }
 
   hitbox() {
@@ -143,19 +143,20 @@ class Arrow {
 
   move() {
     if (this.direction === 0) {
-      this.position[0] += 10;
+      this.position[0] += 5;
     } else if (this.direction === 1) {
-      this.position[0] -= 10;
+      this.position[0] -= 5;
     } else if (this.direction === 2) {
-      this.position[1] += 10;
+      this.position[1] += 5;
     } else {
-      this.position[1] -= 10;
+      this.position[1] -= 5;
     }
   }
 
   draw() {
     let sprite = this.getSprite();
-    this.ctx.clearRect(this.position[0], this.position[1], this.width, this.height)
+    // this.ctx.clearRect(this.position[0], this.position[1], this.hitbox().width, this.hitbox().height)
+    // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.arrow,
       sprite[0],
@@ -201,9 +202,7 @@ class Enemy {
     this.canvas = canvas;
     this.ctx = ctx;
     this.position = pos;
-
     this.enemyDeathSound = new Audio('./assets/LTTP_Enemy_Kill.wav')
-
   }
 
   recoil(attackedSide) {
@@ -295,23 +294,25 @@ class Game {
     this.loop = this.loop.bind(this);
     this.keys = [];
     this.arrows = [];
+    this.oldTime = Date.now();
     this.linkHurtSound = new Audio('./assets/LTTP_Link_Hurt.wav');
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
-    this.combineListeners();
+
     this.makeEnemy = this.makeEnemy.bind(this);
     this.makeArrow = this.makeArrow.bind(this);
+
+    this.combineListeners();
     setInterval(this.makeEnemy, 3000)
-    // setInterval(this.makeArrow, 500)
   }
 
 
   combineListeners() {
     document.addEventListener('keydown', this.link.getMoveKeys);
-    document.addEventListener('keyup', this.link.deleteMoveKeys);
     document.addEventListener('keydown', this.link.move);
-    document.addEventListener('keydown', this.link.attack);
-    document.addEventListener('keydown', this.link.useBow);
+    document.addEventListener('keyup', this.link.deleteMoveKeys);
     document.addEventListener('keyup', this.link.stopWalking);
+    document.addEventListener('keydown', this.link.attack);
+    document.addEventListener('keydown', this.link.useBow)
   }
 
   loop() {
@@ -321,17 +322,17 @@ class Game {
   }
 
   update() {
-    this.makeArrow();
     this.gameOver();
     this.avoidOverlap();
     this.updateEnemies();
     this.updateArrows();
+    this.makeArrow();
   }
 
   draw() {
     this.link.draw();
-    this.drawEnemies();
     this.drawArrows();
+    this.drawEnemies();
   }
 
   makeEnemy() {
@@ -368,7 +369,6 @@ class Game {
             this.arrows.splice(j, 1);
           }
         }
-
       }
     }
   }
@@ -381,12 +381,37 @@ class Game {
 
   makeArrow() {
     if (this.link.firingBow === true) {
-      const startPos = this.link.position.slice(0);
-      this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
-      this.link.firingBow = false
-      this.link.ammo -= 1
-      console.log(this.link.ammo)
+      let startPos = this.link.position.slice(0);
+      if (this.link.currentDirection === 0) {
+        startPos[0] += this.link.scaledWidth;
+        startPos[1] += this.link.scaledHeight/2;
+      } else if (this.link.currentDirection === 1) {
+        startPos[0] -= 20;
+        startPos[1] = startPos[1] + this.link.scaledHeight/2;
+      } else if (this.link.currentDirection === 2) {
+        startPos[0] += this.link.scaledWidth/2;
+        startPos[1] += this.link.scaledHeight;
+      } else {
+        startPos[0] += this.link.scaledWidth/2;
+        startPos[1] -= 20;
+      }
+
+      if (this.arrowLimit()) {
+        return
+      } else {
+
+        this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
+        this.link.ammo -= 1;
+        console.log(this.link.ammo);
+      }
     }
+  }
+
+  arrowLimit() {
+    if (Date.now() - this.oldTime < 500) {
+      return true
+    }
+    this.oldTime = Date.now();
   }
 
   updateArrows() {
@@ -405,7 +430,6 @@ class Game {
       this.arrows[i].draw();
     }
   }
-
 
   enemySpawnPos() {
     const wall = Math.floor(Math.random()*4);
@@ -513,53 +537,74 @@ const ATTACK_POS_OFFSET = {
   "attackUp": [[0, 0], [0, -7], [0, -8], [-4, -6], [-12, -1]],
 }
 
+const bow_directions = ["bowRight", "bowLeft", "bowDown", "bowUp"];
+
+const BOW_SPRITES = {
+  "bowRight": [
+    [117, 367, 20, 24],
+    [143, 367, 19, 24],
+    [169, 367, 17, 24],
+  ],
+  "bowLeft": [
+    [168, 342, 20, 24],
+    [143, 342, 19, 24],
+    [119, 342, 17, 24],
+  ],
+  "bowDown": [
+    [324, 95, 17, 24],
+    [348, 95, 18, 24],
+    [372, 95, 19, 24],
+  ],
+  "bowUp": [
+    [316, 342, 18, 22],
+    [338, 342, 21, 22],
+    [362, 342, 21, 22],
+  ],
+}
+
 class Link {
   constructor(canvas, ctx) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.link = new Image();
     this.link.src = './assets/link_sprites.png';
+    this.link2 = new Image();
+    this.link2.src = './assets/link-2.gif';
     this.width = 20;
     this.height = 25;
     this.scale = 1.5;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
     this.currentLoopIndex = 0;
-    this.currentAttackLoopIndex = 0;
-    this.currentDirection = 3;
+    this.attackCurrentLoopIndex = 0;
+    this.bowCurrentLoopIndex = 0;
     this.position = [this.canvas.width/2 - this.scaledWidth/2, this.canvas.height*.6];
-    this.keys = {};
+    this.currentDirection = 3;
     this.frameCount = 0;
     this.attackFrameCount = 0;
-    this.life = 3;
+    this.bowFrameCount = 0;
+    this.keys = {};
     this.attacking = false;
     this.walking = false;
     this.stunned = false;
     this.invincible = false;
-
     this.firingBow = false;
-    this.ammo = 100;
+    this.ammo = 100000;
+    this.life = 3;
 
-    //sounds
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
       new Audio('./assets/LTTP_Sword2.wav')];
     this.arrowShootSound = new Audio('./assets/LTTP_Arrow_Shoot.wav');
     this.enemyHitSound = new Audio('./assets/LTTP_Enemy_Hit.wav');
 
-    // this.step = this.step.bind(this);
     this.move = this.move.bind(this);
-    this.stand = this.stand.bind(this);
-    this.step = this.step.bind(this);
-    this.swing = this.swing.bind(this);
-    this.stopWalking = this.stopWalking.bind(this);
     this.attack = this.attack.bind(this);
+    this.useBow = this.useBow.bind(this);
+    this.stopWalking = this.stopWalking.bind(this);
     this.getMoveKeys = this.getMoveKeys.bind(this);
     this.deleteMoveKeys = this.deleteMoveKeys.bind(this);
-    this.draw = this.draw.bind(this);
-    this.invincibility = this.invincibility.bind(this);
-    this.useBow = this.useBow.bind(this);
-    // this.fireBow = this.fireBow.bind(this);
+    this.fireBow = this.fireBow.bind(this);
   };
 
   hitbox() {
@@ -596,7 +641,7 @@ class Link {
     } else {
       return {
         x: this.position[0],
-        y: this.position[1] - 6*this.scale,
+        y: this.position[1] - 7*this.scale,
         width: this.scaledWidth,
         height: 6*this.scale,
       }
@@ -792,43 +837,39 @@ class Link {
     // this.ctx.lineWidth = 1
     // this.ctx.strokeStyle = 'yellow';
     // this.ctx.stroke();
-
-
   };
 
   swing() {
     if (this.attacking === true) {
-
-      let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length
+      let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length;
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
-      while (this.currentAttackLoopIndex <= cycleLoop.length) {
+      while (this.attackCurrentLoopIndex <= cycleLoop.length) {
         this.attackFrameCount++
         if (this.attackFrameCount < 3) {
           return;
         }
         this.attackFrameCount = 0;
 
-        if (this.currentAttackLoopIndex === cycleLoop.length) {
+        if (this.attackCurrentLoopIndex === cycleLoop.length) {
           break;
         }
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         this.drawAttackFrame(
           attack_directions[this.currentDirection],
-          cycleLoop[this.currentAttackLoopIndex],
+          cycleLoop[this.attackCurrentLoopIndex],
         ),
-        this.currentAttackLoopIndex++;
+        this.attackCurrentLoopIndex++;
       }
-      this.currentAttackLoopIndex = 0;
-      this.walking = false;
+      this.attackCurrentLoopIndex = 0;
       this.attacking = false;
     }
   }
 
   attack(e) {
-    if (this.stunned || this.attacking === true) {
+    if ((this.stunned || this.firingBow || this.attacking) === true) {
       return;
     }
-    if(this.keys[72] === true) {
+    if (this.keys[72] === true) {
       const swordSoundIdx = Math.floor(Math.random()*2)
       this.swordSwingSounds[swordSoundIdx].play();
       this.walking = false;
@@ -836,22 +877,55 @@ class Link {
     }
   }
 
-  // fireBow() {
-  //   if (this.firingBow === true) {
-  //
-  //   }
-  // }
+  drawBowFrame(frames) {
+    this.ctx.drawImage(
+      this.link2,
+      frames[0],
+      frames[1],
+      frames[2],
+      frames[3],
+      this.position[0],
+      this.position[1],
+      frames[2]*this.scale,
+      frames[3]*this.scale,
+    )
+  }
+
+  fireBow() {
+    if (this.firingBow === true) {
+      let allFrames = BOW_SPRITES[bow_directions[this.currentDirection]]
+      let numFrames = allFrames.length
+      while (this.bowCurrentLoopIndex <= numFrames) {
+        this.bowFrameCount++
+        if (this.bowFrameCount < 8) {
+          return;
+        }
+        this.bowFrameCount = 0;
+        if (this.bowCurrentLoopIndex === numFrames) {
+          break;
+        }
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.drawBowFrame(
+          allFrames[this.bowCurrentLoopIndex]
+        ),
+        this.bowCurrentLoopIndex++;
+      }
+      this.bowCurrentLoopIndex = 0;
+      this.firingBow = false;
+    }
+  }
 
   useBow(e) {
+    if ((this.stunned || this.firingBow || this.attacking) === true) {
+      return;
+    }
     if (this.keys[66] === true && this.ammo > 0) {
-      console.log("firing bow")
       this.arrowShootSound.play();
       this.firingBow = true;
     }
   }
 
   drawStand() {
-
     this.ctx.drawImage(
       this.link,
       STANDING[this.currentDirection][0],
@@ -866,7 +940,7 @@ class Link {
   }
 
   stand() {
-    if ((this.walking || this.attacking) === false) {
+    if ((this.walking || this.attacking || this.firingBow) === false) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawStand();
     }
@@ -895,9 +969,9 @@ class Link {
     this.preventOffscreen();
     this.swing();
     this.step();
+    this.fireBow();
     this.stand();
     this.invincibility();
-    //this.fireBow();
   };
 }
 
@@ -957,8 +1031,8 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.life = 3;
     this.scale = 1.5;
     this.speed = Math.random()*.8;
+
     this.move = this.move.bind(this);
-    this.draw = this.draw.bind(this);
   }
 
   hitbox() {
@@ -1013,7 +1087,6 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   draw() {
-    this.ctx.clearRect(this.position[0], this.position[1], this.width, this.height)
     if (this.frameCount < 9) {
       this.frameCount++
     } else {
@@ -1023,6 +1096,8 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
 
     let sprite = this.getSprite();
 
+    this.ctx.clearRect(this.position[0], this.position[1], this.hitbox().width, this.hitbox().height)
+    // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(
       this.wallmaster,
       sprite[0],
