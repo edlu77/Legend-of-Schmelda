@@ -584,6 +584,7 @@ class Link {
     this.frameCount = 0;
     this.attackFrameCount = 0;
     this.bowFrameCount = 0;
+    this.invFrameCount = 0;
     this.keys = {};
     this.attacking = false;
     this.walking = false;
@@ -704,14 +705,18 @@ class Link {
     if (this.invincible === true) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
-      this.frameCount++
-      if (this.frameCount < 5) {
+      this.invFrameCount++
+      if (this.invFrameCount < 5) {
         return;
       }
-      this.frameCount = 0;
+      this.invFrameCount = 0;
 
       if (this.attacking === true) {
         this.swing();
+      } else if (this.walking === true) {
+        this.step();
+      } else if (this.firingBow === true) {
+        this.fireBow();
       } else {
         this.drawStand();
       }
