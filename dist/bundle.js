@@ -195,14 +195,26 @@ class Arrow {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-const ENEMY_KILL_SPRITES = []
+const DEATH_POOF = [
+  [79, 4, 24, 24],
+  [105, 4, 24, 24],
+  [131, 3, 24, 24],
+  [157, 4, 24, 24]
+]
 
 class Enemy {
   constructor(canvas, ctx, pos) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.position = pos;
+    this.scale = 2.6;
     this.enemyDeathSound = new Audio('./assets/LTTP_Enemy_Kill.wav')
+    this.poofCurrentLoopIndex = 0;
+    this.poofFrameCount = 0;
+    this.deathPoof = new Image;
+    this.deathPoof.src = './assets/death-effects.png';
+    this.dead = false;
+    this.poofing = false;
   }
 
   recoil(attackedSide) {
@@ -217,11 +229,51 @@ class Enemy {
     }
   };
 
+  drawDeathPoof(frame) {
+    this.ctx.drawImage(
+      this.deathPoof,
+      frame[0],
+      frame[1],
+      frame[2],
+      frame[3],
+      this.position[0],
+      this.position[1],
+      frame[2]*this.scale,
+      frame[3]*this.scale,
+    )
+  }
 
-  isDead() {
-    if (this.life === 0) {
-      this.enemyDeathSound.play();
+  poof() {
+    if (this.poofing === true) {
+      let currentFrame = DEATH_POOF[this.poofCurrentLoopIndex]
+      let numFrames = 4;
+      if (this.poofFrameCount < 5) {
+        console.log(this.poofCurrentLoopIndex)
+
+        this.drawDeathPoof(currentFrame),
+        this.poofFrameCount++;
+        return;
+      }
+      this.poofFrameCount = 0;
+      this.poofCurrentLoopIndex++;
+      console.log(this.poofCurrentLoopIndex)
+      if (this.poofCurrentLoopIndex >= numFrames) {
+        this.poofing = false;
+        this.poofCurrentLoopIndex = 0
+        return
+      }
+      this.drawDeathPoof(currentFrame)
+    }
+  }
+
+
+  isFullyDestroyed() {
+    if (this.poofing === true) {
+      return false;
+    } else if (this.dead === true) {
       return true;
+    } else {
+      return false;
     }
   };
 
@@ -346,7 +398,7 @@ class Game {
   updateEnemies() {
     for (let i = 0; i < this.enemies.length; i++) {
       //clear any dead enemies from the state
-      if (this.enemies[i].isDead()) {
+      if (this.enemies[i].isFullyDestroyed() === true) {
         this.enemies.splice(i, 1);
       }
       if (this.enemies[i]) {
@@ -359,15 +411,27 @@ class Game {
           console.log(this.link.life)
         }
         if (this.link.attackedObject(this.enemies[i])) {
-          this.enemies[i].recoil(this.link.currentDirection);
-          this.enemies[i].life -= 1
+          this.enemies[i].life -= 1;
+          if (this.enemies[i].life <= 0) {
+            this.enemies[i].enemyDeathSound.play();
+            this.enemies[i].dead = true;
+            this.enemies[i].poofing = true;
+          } else {
+            this.enemies[i].recoil(this.link.currentDirection);
+          }
         }
         //check for arrow hits
         for (let j = 0; j < this.arrows.length; j++) {
           if (this.enemies[i].collidedWith(this.arrows[j])) {
             this.arrowHitSound.play();
-            this.enemies[i].recoil(this.arrows[j].direction);
             this.enemies[i].life -= 1;
+            if (this.enemies[i].life <= 0) {
+              this.enemies[i].enemyDeathSound.play();
+              this.enemies[i].dead = true;
+              this.enemies[i].poofing = true;
+            } else {
+              this.enemies[i].recoil(this.arrows[j].direction);
+            }
             this.arrows.splice(j, 1);
           }
         }
@@ -607,7 +671,6 @@ class Link {
     this.stopWalking = this.stopWalking.bind(this);
     this.getMoveKeys = this.getMoveKeys.bind(this);
     this.deleteMoveKeys = this.deleteMoveKeys.bind(this);
-    this.fireBow = this.fireBow.bind(this);
   };
 
   hitbox() {
@@ -892,17 +955,17 @@ class Link {
     }
   }
 
-  drawBowFrame(frames) {
+  drawBowFrame(frame) {
     this.ctx.drawImage(
       this.link2,
-      frames[0],
-      frames[1],
-      frames[2],
-      frames[3],
+      frame[0],
+      frame[1],
+      frame[2],
+      frame[3],
       this.position[0],
       this.position[1],
-      frames[2]*this.scale,
-      frames[3]*this.scale,
+      frame[2]*this.scale,
+      frame[3]*this.scale,
     )
   }
 
@@ -910,21 +973,19 @@ class Link {
     if (this.firingBow === true) {
       let allFrames = BOW_SPRITES[bow_directions[this.currentDirection]]
       let numFrames = allFrames.length
-      while (this.bowCurrentLoopIndex < numFrames) {
-        if (this.bowFrameCount < 8) {
-          this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]),
-          this.bowFrameCount++;
-          return;
-        }
-        this.bowFrameCount = 0;
-        this.bowCurrentLoopIndex++;
-        if (this.bowCurrentLoopIndex === numFrames) {
-          break;
-        }
-        this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]);
+      if (this.bowFrameCount < 8) {
+        this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]),
+        this.bowFrameCount++;
+        return;
       }
-      this.bowCurrentLoopIndex = 0;
-      this.firingBow = false;
+      this.bowFrameCount = 0;
+      this.bowCurrentLoopIndex++;
+      if (this.bowCurrentLoopIndex >= numFrames) {
+        this.bowCurrentLoopIndex = 0
+        this.firingBow = false;
+        return
+      }
+      this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]);
     }
   }
 
@@ -1040,8 +1101,6 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.life = 3;
     this.scale = 2.6;
     this.speed = .6;
-
-    this.move = this.move.bind(this);
   }
 
   hitbox() {
@@ -1084,6 +1143,9 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   move(player) {
+    if (this.poofing === true) {
+      return
+    }
     // if (this.currentDirection === 0) {
     //   this.position[0] += this.speed;
     //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
@@ -1099,6 +1161,9 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   step() {
+    if (this.poofing === true) {
+      return
+    }
     let allFrames = MOBLIN_SPRITES[moblin_directions[this.currentDirection]]
     let numFrames = allFrames.length;
     if (this.frameCount < 8) {
@@ -1133,6 +1198,7 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
 
   draw() {
     this.step();
+    this.poof();
   }
 }
 
