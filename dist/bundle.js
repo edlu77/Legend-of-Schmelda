@@ -186,6 +186,58 @@ class Arrow {
 
 /***/ }),
 
+/***/ "./lib/arrow_item.js":
+/*!***************************!*\
+  !*** ./lib/arrow_item.js ***!
+  \***************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _item__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./item */ "./lib/item.js");
+
+
+const ARROW_ITEM_SPRITES = {
+  1: [192, 8, 16, 16],
+  5: [235, 8, 16, 16],
+  10: [259, 8, 16, 16],
+}
+
+class ArrowItem extends _item__WEBPACK_IMPORTED_MODULE_0__["default"] {
+  constructor(canvas, ctx, pos, value) {
+    super(canvas, ctx, pos);
+    this.arrowItem = new Image();
+    this.arrowItem.src = './assets/items-overworld.png';
+    this.value = value;
+  }
+
+  getSprite(){
+    return ARROW_ITEM_SPRITES[this.value]
+  }
+
+  draw() {
+    const sprite = this.getSprite();
+    this.ctx.drawImage(
+      this.arrowItem,
+      sprite[0],
+      sprite[1],
+      sprite[2],
+      sprite[3],
+      this.position[0],
+      this.position[1],
+      this.scale*sprite[2],
+      this.scale*sprite[3],
+    )
+  }
+
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (ArrowItem);
+
+
+/***/ }),
+
 /***/ "./lib/enemy.js":
 /*!**********************!*\
   !*** ./lib/enemy.js ***!
@@ -329,6 +381,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _moblin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./moblin.js */ "./lib/moblin.js");
 /* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
 /* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
+/* harmony import */ var _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./arrow_item.js */ "./lib/arrow_item.js");
+
 
 
 
@@ -344,6 +398,7 @@ class Game {
     this.loop = this.loop.bind(this);
     this.keys = [];
     this.arrows = [];
+    this.items = [];
     this.oldTime = Date.now();
     this.linkHurtSound = new Audio('./assets/LTTP_Link_Hurt.wav');
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
@@ -385,6 +440,7 @@ class Game {
     this.link.draw();
     this.drawEnemies();
     this.drawArrows();
+    this.drawItems();
   }
 
   makeEnemy() {
@@ -397,6 +453,8 @@ class Game {
     for (let i = 0; i < this.enemies.length; i++) {
       //clear any dead enemies from the state
       if (this.enemies[i].isFullyDestroyed() === true) {
+        console.log(this.canvas)
+        this.items.push(new _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__["default"](this.canvas, this.ctx, this.enemies[i].position, 1))
         this.enemies.splice(i, 1);
         this.score++;
         console.log(`score: ${this.score}`);
@@ -442,6 +500,12 @@ class Game {
   drawEnemies() {
     for (let i = 0; i < this.enemies.length; i++) {
       this.enemies[i].draw();
+    }
+  }
+
+  drawItems() {
+    for (let i = 0; i < this.items.length; i++) {
+      this.items[i].draw();
     }
   }
 
@@ -530,6 +594,30 @@ class Game {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
+
+
+/***/ }),
+
+/***/ "./lib/item.js":
+/*!*********************!*\
+  !*** ./lib/item.js ***!
+  \*********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+class Item {
+  constructor(canvas, ctx, pos) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    this.position = pos;
+    this.scale = 2.6;
+    this.itemGetSound = new Audio('./assets/LTTP_Item.wav')
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Item);
 
 
 /***/ }),
@@ -1146,17 +1234,6 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     if (this.poofing === true) {
       return
     }
-    // if (this.currentDirection === 0) {
-    //   this.position[0] += this.speed;
-    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
-    //     this.currentDirection = 1
-    //   }
-    // } else if (this.currentDirection === 1) {
-    //   this.position[0] -= this.speed;
-    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
-    //     this.currentDirection = 0
-    //   }
-    // }
     this.moveTowardsObject(player)
   }
 
