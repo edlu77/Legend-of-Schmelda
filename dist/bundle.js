@@ -342,8 +342,8 @@ class Enemy {
     return {
       x: this.position[0],
       y: this.position[1],
-      width: this.width,
-      height: this.height,
+      width: this.width*this.scale,
+      height: this.height*this.scale,
     }
   };
 
@@ -358,18 +358,46 @@ class Enemy {
     }
   };
 
-  moveAwayFromObject(object) {
-    if (object.position[0] < this.position[0]) {
+  moveAwayFromEnemy(enemy) {
+    if (enemy.position[0] < this.position[0]) {
       this.position[0] += 1;
     }
-    if (object.position[1] < this.position[1]) {
+    if (enemy.position[1] < this.position[1]) {
       this.position[1] += 1;
     }
-    if (object.position[0] > this.position[0]) {
+    if (enemy.position[0] > this.position[0]) {
       this.position[0] -= 1;
     }
-    if (object.position[1] > this.position[1]) {
+    if (enemy.position[1] > this.position[1]) {
       this.position[1] -= 1;
+    }
+  }
+
+  moveAwayFromObject(object) {
+    const enemyHit = this.hitbox()
+    const objectHit = object.hitbox()
+
+    const linkBottom = enemyHit.y + enemyHit.height;
+    const objectBottom = objectHit.y + objectHit.height;
+    const linkRight = enemyHit.x + enemyHit.width;
+    const objectRight = objectHit.x + objectHit.width;
+
+    const bottomCollision = objectBottom - enemyHit.y;
+    const topCollision = linkBottom - objectHit.y;
+    const leftCollision = linkRight - objectHit.x;
+    const rightCollision = objectRight - enemyHit.x;
+
+    if (topCollision < bottomCollision && topCollision < leftCollision && topCollision < rightCollision ) {
+      this.position[1] = objectHit.y - enemyHit.height
+    }
+    if (bottomCollision < topCollision && bottomCollision < leftCollision && bottomCollision < rightCollision) {
+      this.position[1] = objectBottom
+    }
+    if (leftCollision < rightCollision && leftCollision < topCollision && leftCollision < bottomCollision) {
+      this.position[0] = objectHit.x - enemyHit.width
+    }
+    if (rightCollision < leftCollision && rightCollision < topCollision && rightCollision < bottomCollision ) {
+      this.position[0] = objectRight
     }
   };
 
@@ -395,6 +423,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
 /* harmony import */ var _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./arrow_item.js */ "./lib/arrow_item.js");
 /* harmony import */ var _heart_item_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./heart_item.js */ "./lib/heart_item.js");
+/* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
+
 
 
 
@@ -405,6 +435,7 @@ __webpack_require__.r(__webpack_exports__);
 class Game {
   constructor(canvas, ctx) {
     this.enemies = [];
+    this.obstacles = [];
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
@@ -422,6 +453,7 @@ class Game {
     this.makeArrow = this.makeArrow.bind(this);
 
     this.combineListeners();
+    this.makeObstacles();
     setInterval(this.makeEnemy, 3000)
   }
 
@@ -443,6 +475,7 @@ class Game {
 
   update() {
     this.gameOver();
+    this.handleObstacleCollisions();
     this.updateEnemies();
     this.avoidOverlap();
     this.updateArrows();
@@ -456,6 +489,38 @@ class Game {
     this.drawEnemies();
     this.drawArrows();
     this.drawItems();
+    this.drawObstacles();
+  }
+
+  makeObstacles() {
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 32], 25, 72));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 193], 79, 48));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 241], 96, 11));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([329, 29], 26, 72));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([120, 150], 60, 60));
+  }
+
+  drawObstacles() {
+    for (var i = 0; i < this.obstacles.length; i++) {
+      this.ctx.beginPath();
+      this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
+      this.ctx.lineWidth = 1
+      this.ctx.strokeStyle = 'yellow';
+      this.ctx.stroke();
+    }
+  }
+
+  handleObstacleCollisions() {
+    for (let i = 0; i < this.obstacles.length; i++) {
+      for (let j = 0; j < this.enemies.length; j++) {
+        if (this.enemies[j].collidedWith(this.obstacles[i])) {
+          this.enemies[j].moveAwayFromObject(this.obstacles[i]);
+        }
+      }
+      if (this.link.collidedWith(this.obstacles[i])) {
+        this.link.moveAwayFromObject(this.obstacles[i])
+      }
+    }
   }
 
   makeEnemy() {
@@ -466,7 +531,6 @@ class Game {
 
   dropItem(position) {
     const roll = Math.random()*10;
-    console.log(roll)
     if (roll < 1) {
       this.items.push(new _heart_item_js__WEBPACK_IMPORTED_MODULE_5__["default"](this.canvas, this.ctx, position, 1))
     } else if (roll >= 1 && roll < 3) {
@@ -618,8 +682,8 @@ class Game {
     for (let i = 0; i < this.enemies.length-1; i++) {
       for (let j = i+1; j < this.enemies.length; j++) {
         if (this.enemies[i].collidedWith(this.enemies[j])) {
-          this.enemies[i].moveAwayFromObject(this.enemies[j])
-          this.enemies[j].moveAwayFromObject(this.enemies[i])
+          this.enemies[i].moveAwayFromEnemy(this.enemies[j])
+          this.enemies[j].moveAwayFromEnemy(this.enemies[i])
         }
       }
     }
@@ -826,11 +890,11 @@ class Link {
     this.scale = 2.6;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
+    this.position = [this.canvas.width/2 - this.scaledWidth/2, this.canvas.height*.6];
+    this.currentDirection = 3;
     this.currentLoopIndex = 0;
     this.attackCurrentLoopIndex = 0;
     this.bowCurrentLoopIndex = 0;
-    this.position = [this.canvas.width/2 - this.scaledWidth/2, this.canvas.height*.6];
-    this.currentDirection = 3;
     this.frameCount = 0;
     this.attackFrameCount = 0;
     this.bowFrameCount = 0;
@@ -849,6 +913,7 @@ class Link {
       new Audio('./assets/LTTP_Sword2.wav')];
     this.arrowShootSound = new Audio('./assets/LTTP_Arrow_Shoot.wav');
     this.enemyHitSound = new Audio('./assets/LTTP_Enemy_Hit.wav');
+    this.getItemSound = new Audio('./assets/LTTP_Item.wav');
 
     this.move = this.move.bind(this);
     this.attack = this.attack.bind(this);
@@ -914,6 +979,34 @@ class Link {
     }
   };
 
+  moveAwayFromObject(object) {
+    const linkHit = this.hitbox()
+    const objectHit = object.hitbox()
+
+    const linkBottom = linkHit.y + linkHit.height;
+    const objectBottom = objectHit.y + objectHit.height;
+    const linkRight = linkHit.x + linkHit.width;
+    const objectRight = objectHit.x + objectHit.width;
+
+    const bottomCollision = objectBottom - linkHit.y;
+    const topCollision = linkBottom - objectHit.y;
+    const leftCollision = linkRight - objectHit.x;
+    const rightCollision = objectRight - linkHit.x;
+
+    if (topCollision < bottomCollision && topCollision < leftCollision && topCollision < rightCollision ) {
+      this.position[1] = objectHit.y - linkHit.height
+    }
+    if (bottomCollision < topCollision && bottomCollision < leftCollision && bottomCollision < rightCollision) {
+      this.position[1] = objectBottom
+    }
+    if (leftCollision < rightCollision && leftCollision < topCollision && leftCollision < bottomCollision) {
+      this.position[0] = objectHit.x - linkHit.width
+    }
+    if (rightCollision < leftCollision && rightCollision < topCollision && rightCollision < bottomCollision ) {
+      this.position[0] = objectRight
+    }
+  };
+
   attackedObject(object) {
     let swordHit = this.hurtbox()
     let objectHit = object.hitbox()
@@ -972,19 +1065,6 @@ class Link {
     }
   }
 
-  oppositeDirection() {
-    switch (this.currentDirection) {
-      case 0:
-        return 1;
-      case 1:
-        return 0;
-      case 2:
-        return 3;
-      case 3:
-        return 2;
-    }
-  }
-
   //moving
 
   drawWalkFrame(direction, frame) {
@@ -999,11 +1079,11 @@ class Link {
       this.scaledWidth,
       this.scaledHeight,
     )
-    // this.ctx.beginPath();
-    // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
-    // this.ctx.lineWidth = 1
-    // this.ctx.strokeStyle = 'yellow';
-    // this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
   };
 
   step() {
@@ -1045,18 +1125,6 @@ class Link {
     if (this.stunned === true || this.attacking === true) {
       return
     }
-    if (this.keys[65] === true) {
-      this.walking = true
-      this.attacking = false;
-      this.position[0] -= 15;
-      this.currentDirection = 1;
-    }
-    if (this.keys[68] === true) {
-      this.walking = true
-      this.attacking = false;
-      this.position[0] += 15;
-      this.currentDirection = 0;
-    }
     if (this.keys[83] === true) {
       this.walking = true
       this.attacking = false;
@@ -1069,7 +1137,18 @@ class Link {
       this.position[1] -= 15;
       this.currentDirection = 3;
     }
-
+    if (this.keys[65] === true) {
+      this.walking = true
+      this.attacking = false;
+      this.position[0] -= 15;
+      this.currentDirection = 1;
+    }
+    if (this.keys[68] === true) {
+      this.walking = true
+      this.attacking = false;
+      this.position[0] += 15;
+      this.currentDirection = 0;
+    }
   };
 
   //attacking
@@ -1091,11 +1170,11 @@ class Link {
       attackWidth*this.scale,
       attackHeight*this.scale,
     )
-    // this.ctx.beginPath();
-    // this.ctx.rect(this.position[0], this.position[1], attackWidth*this.scale, attackHeight*this.scale)
-    // this.ctx.lineWidth = 1
-    // this.ctx.strokeStyle = 'yellow';
-    // this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.rect(attackPosX, attackPosY, attackWidth*this.scale, attackHeight*this.scale)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
   };
 
   swing() {
@@ -1205,6 +1284,7 @@ class Link {
   }
 
   pickUpItem(item) {
+    this.getItemSound.play();
     if (item instanceof _arrow_item__WEBPACK_IMPORTED_MODULE_0__["default"]) {
       this.ammo += item.value;
     } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"]) {
@@ -1389,6 +1469,38 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Moblin);
+
+
+/***/ }),
+
+/***/ "./lib/obstacle.js":
+/*!*************************!*\
+  !*** ./lib/obstacle.js ***!
+  \*************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+class Obstacle {
+  constructor(pos, width, height) {
+    this.position = pos;
+    this.width = width;
+    this.height = height;
+    this.scale = 2;
+  }
+
+  hitbox() {
+    return {
+      x: this.position[0]*this.scale,
+      y: this.position[1]*this.scale,
+      width: this.width*this.scale,
+      height: this.height*this.scale,
+    }
+  };
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Obstacle);
 
 
 /***/ }),
