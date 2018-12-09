@@ -229,6 +229,13 @@ class ArrowItem extends _item__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   draw() {
+    if (this.flashing) {
+      this.flashFrameCount++
+      if (this.flashFrameCount < 5) {
+        return;
+      }
+      this.flashFrameCount = 0;
+    }
     const sprite = this.getSprite();
     this.ctx.drawImage(
       this.arrowItem,
@@ -359,6 +366,9 @@ class Enemy {
   };
 
   moveAwayFromEnemy(enemy) {
+    if (this.poofing) {
+      return
+    }
     if (enemy.position[0] < this.position[0]) {
       this.position[0] += 1;
     }
@@ -497,7 +507,6 @@ class Game {
     this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 193], 79, 48));
     this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 241], 96, 11));
     this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([329, 29], 26, 72));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([120, 150], 60, 60));
   }
 
   drawObstacles() {
@@ -605,9 +614,15 @@ class Game {
 
   updateItems() {
     for (let i = 0; i < this.items.length; i++) {
-      if (this.link.collidedWith(this.items[i])) {
-        this.link.pickUpItem(this.items[i]);
+      if (Date.now() - this.items[i].spawnTime > 10000) {
         this.items.splice(i, 1);
+      }
+
+      if (this.items[i]) {
+        if (this.link.collidedWith(this.items[i])) {
+          this.link.pickUpItem(this.items[i]);
+          this.items.splice(i, 1);
+        }
       }
     }
   }
@@ -734,6 +749,13 @@ class HeartItem extends _item__WEBPACK_IMPORTED_MODULE_0__["default"] {
   };
 
   draw() {
+    if (this.flashing) {
+      this.flashFrameCount++
+      if (this.flashFrameCount < 5) {
+        return;
+      }
+      this.flashFrameCount = 0;
+    }
     this.ctx.drawImage(
       this.heartItem,
       273,
@@ -769,8 +791,13 @@ class Item {
     this.ctx = ctx;
     this.position = pos;
     this.scale = 2.6;
-    this.itemGetSound = new Audio('./assets/LTTP_Item.wav')
+    this.itemGetSound = new Audio('./assets/LTTP_Item.wav');
+    this.spawnTime = Date.now();
+    this.flashing = false;
+
+    setTimeout(() => {this.flashing = true;}, 7000)
   }
+
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Item);
