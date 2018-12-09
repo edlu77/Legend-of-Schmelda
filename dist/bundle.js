@@ -210,7 +210,19 @@ class ArrowItem extends _item__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.arrowItem = new Image();
     this.arrowItem.src = './assets/items-overworld.png';
     this.value = value;
+    this.width = 16;
+    this.height = 16;
+    this.weight = 10;
   }
+
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: this.width*this.scale,
+      height: this.height*this.scale,
+    }
+  };
 
   getSprite(){
     return ARROW_ITEM_SPRITES[this.value]
@@ -382,6 +394,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
 /* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
 /* harmony import */ var _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./arrow_item.js */ "./lib/arrow_item.js");
+/* harmony import */ var _heart_item_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./heart_item.js */ "./lib/heart_item.js");
+
 
 
 
@@ -433,6 +447,7 @@ class Game {
     this.avoidOverlap();
     this.updateArrows();
     this.makeArrow();
+    this.updateItems();
   }
 
   draw() {
@@ -449,12 +464,27 @@ class Game {
     }
   }
 
+  dropItem(position) {
+    const roll = Math.random()*10;
+    console.log(roll)
+    if (roll < 1) {
+      this.items.push(new _heart_item_js__WEBPACK_IMPORTED_MODULE_5__["default"](this.canvas, this.ctx, position, 1))
+    } else if (roll >= 1 && roll < 3) {
+      const amount = [1, 5, 10][Math.floor(Math.random()*3)]
+      this.items.push(new _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__["default"](this.canvas, this.ctx, position, amount))
+    } else {
+      return
+    }
+  }
+
   updateEnemies() {
     for (let i = 0; i < this.enemies.length; i++) {
       //clear any dead enemies from the state
       if (this.enemies[i].isFullyDestroyed() === true) {
-        console.log(this.canvas)
-        this.items.push(new _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__["default"](this.canvas, this.ctx, this.enemies[i].position, 1))
+        this.dropItem(
+          [this.enemies[i].position[0] + (this.enemies[i].scaledWidth/2),
+            this.enemies[i].position[1] + (this.enemies[i].scaledHeight/2)]
+        )
         this.enemies.splice(i, 1);
         this.score++;
         console.log(`score: ${this.score}`);
@@ -506,6 +536,15 @@ class Game {
   drawItems() {
     for (let i = 0; i < this.items.length; i++) {
       this.items[i].draw();
+    }
+  }
+
+  updateItems() {
+    for (let i = 0; i < this.items.length; i++) {
+      if (this.link.collidedWith(this.items[i])) {
+        this.link.pickUpItem(this.items[i]);
+        this.items.splice(i, 1);
+      }
     }
   }
 
@@ -598,6 +637,59 @@ class Game {
 
 /***/ }),
 
+/***/ "./lib/heart_item.js":
+/*!***************************!*\
+  !*** ./lib/heart_item.js ***!
+  \***************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _item__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./item */ "./lib/item.js");
+
+
+class HeartItem extends _item__WEBPACK_IMPORTED_MODULE_0__["default"] {
+  constructor(canvas, ctx, pos, value) {
+    super(canvas, ctx, pos);
+    this.heartItem = new Image();
+    this.heartItem.src = './assets/items-overworld.png';
+    this.width = 14;
+    this.height = 13;
+    this.weight = 10;
+    this.scale = 2
+  }
+
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: this.width*this.scale,
+      height: this.height*this.scale,
+    }
+  };
+
+  draw() {
+    this.ctx.drawImage(
+      this.heartItem,
+      273,
+      58,
+      this.width,
+      this.height,
+      this.position[0],
+      this.position[1],
+      this.width*this.scale,
+      this.height*this.scale,
+    )
+  }
+
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (HeartItem);
+
+
+/***/ }),
+
 /***/ "./lib/item.js":
 /*!*********************!*\
   !*** ./lib/item.js ***!
@@ -631,6 +723,11 @@ class Item {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _arrow_item__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./arrow_item */ "./lib/arrow_item.js");
+/* harmony import */ var _heart_item_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./heart_item.js */ "./lib/heart_item.js");
+
+
+
 const directions = ["walkRight", "walkLeft", "walkDown", "walkUp"]
 
 const WALK_X = {
@@ -744,7 +841,7 @@ class Link {
     this.stunned = false;
     this.invincible = false;
     this.firingBow = false;
-    this.ammo = 100000;
+    this.ammo = 5;
     this.life = 3;
 
     this.swordSwingSounds = [
@@ -914,7 +1011,7 @@ class Link {
       let numFrames = WALK_X[directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
 
-      if (this.frameCount < 5) {
+      if (this.frameCount < 3) {
         this.drawWalkFrame(
           directions[this.currentDirection],
           cycleLoop[this.currentLoopIndex],
@@ -1107,6 +1204,14 @@ class Link {
     }
   }
 
+  pickUpItem(item) {
+    if (item instanceof _arrow_item__WEBPACK_IMPORTED_MODULE_0__["default"]) {
+      this.ammo += item.value;
+    } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"]) {
+      this.life++;
+    }
+  }
+
   preventOffscreen() {
     if (this.position[0] < 0) {
       this.position[0] = 0
@@ -1186,21 +1291,28 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.moblin.src = './assets/enemies.png';
     this.currentLoopIndex = 0;
     this.frameCount = 0;
+    this.width = 24;
+    this.height = 26;
     this.life = 3;
     this.scale = 2.6;
-    this.speed = .6;
+    this.speed = 1;
+    this.scaledWidth = this.width*this.scale;
+    this.scaledHeight = this.height*this.scale;
   }
 
   hitbox() {
     return {
       x: this.position[0],
       y: this.position[1],
-      width: 23*this.scale,
-      height: 23*this.scale,
+      width: this.scaledWidth,
+      height: this.scaledHeight,
     }
   };
 
   moveTowardsObject(object) {
+    if (this.poofing === true) {
+      return
+    }
     let dx = Math.abs(object.position[0] - this.position[0]);
     let dy = Math.abs(object.position[1] - this.position[1]);
 
@@ -1231,9 +1343,6 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   move(player) {
-    if (this.poofing === true) {
-      return
-    }
     this.moveTowardsObject(player)
   }
 
