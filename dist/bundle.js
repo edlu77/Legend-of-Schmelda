@@ -880,6 +880,10 @@ class Info {
     this.canvas = canvas;
     this.ctx = ctx;
     this.game = game;
+    this.heart = new Image();
+    this.heart.src = './assets/items-overworld.png';
+    this.bow = new Image();
+    this.bow.src = './assets/items-overworld.png';
 
     this.draw = this.draw.bind(this);
     this.loop = this.loop.bind(this);
@@ -887,15 +891,48 @@ class Info {
 
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    const life = `Life: ${this.game.link.life}`;
-    const arrows = `Arrows: ${this.game.link.ammo}`;
+
     const score = `Score: ${this.game.score}`;
     this.ctx.font = '40px returnofganon';
     this.ctx.fillStyle = 'white';
     this.ctx.textAlign = 'left';
-    this.ctx.fillText(life, 10, 40);
-    this.ctx.fillText(arrows, 10, 80);
+
+    this.drawHearts();
+    this.drawBow();
     this.ctx.fillText(score, 10, 120);
+  }
+
+  drawHearts() {
+    const life = this.game.link.life;
+    for (let i = 0; i < life; i++) {
+      this.ctx.drawImage(
+        this.heart,
+        273,
+        58,
+        14,
+        13,
+        10 + i*35,
+        15,
+        28,
+        26,
+      )
+    }
+  }
+
+  drawBow() {
+    const arrows = `: ${this.game.link.ammo}`;
+    this.ctx.drawImage(
+      this.bow,
+      173,
+      9,
+      15,
+      15,
+      10,
+      50,
+      30,
+      30,
+    )
+    this.ctx.fillText(arrows, 45, 79)
   }
 
   loop() {
@@ -1066,7 +1103,7 @@ class Link {
     this.invincible = false;
     this.firingBow = false;
     this.ammo = 5;
-    this.life = 3;
+    this.life = 5;
 
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
@@ -1653,8 +1690,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 document.addEventListener('DOMContentLoaded', ()=> {
-  const mainCanvas = document.getElementsByClassName('game-window')[0];
-  const infoCanvas = document.getElementsByClassName('info-pane')[0];
+  const mainCanvas = document.getElementsByClassName('game-canvas')[0];
+  const infoCanvas = document.getElementsByClassName('info-canvas')[0];
   const ctx = mainCanvas.getContext('2d');
   const ctxInfo = infoCanvas.getContext('2d');
 

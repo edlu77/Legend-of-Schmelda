@@ -20,7 +20,7 @@ header {
   text-align: center;
   font-family: charlemagne;
   font-weight: bolder;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 main {
@@ -39,11 +39,11 @@ main {
   display: none;
 }
 
-
 .game-area {
   display: flex;
   flex-direction: row;
   height: 100%;
+  margin-bottom: 20px;
 }
 
 .left-column {
@@ -59,13 +59,17 @@ main {
 }
 
 .links {
+  display: flex;
   width: 65%;
-  height: 20%;
-  background: white;
-  margin-bottom: 20px;
+  height: 10%;
+}
+
+a > img {
+  width: 33%;
 }
 
 .middle-column {
+  display: flex;
   width: 50%;
 }
 
@@ -77,9 +81,7 @@ main {
   align-items: center;
 }
 
-.info-pane {
-  width: 85%;
-  height: 40%;
+.info-canvas {
   background: black;
   align-self: center;
 }
@@ -90,9 +92,12 @@ main {
 }
 
 .game-window {
+  width: 710px;
+  height: 504px;
   background: url('../light-world.gif');
   background-size: cover;
   border: 1px solid black;
+  margin: 0 auto;
 }
 
 .main-menu {
