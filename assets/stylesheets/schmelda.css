@@ -1,54 +1,117 @@
 @font-face {
-    font-family: "ReturnofGanon";
+    font-family: "returnofganon";
     src: url('../returnofganon.ttf');
+}
+
+@font-face {
+    font-family: "charlemagne";
+    src: url('../CharlemagneBold.otf');
 }
 
 body {
   background: linear-gradient(#489848, #285830);
   margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 header {
+  height: 10%;
   text-align: center;
-  font-family: ReturnofGanon;
+  font-family: charlemagne;
+  font-weight: bolder;
+  margin-bottom: 20px;
+}
+
+main {
+  height: 90%;
+}
+
+.logo {
+  font-size: 40px;
+}
+
+.logo2 {
+  font-size: 20px;
 }
 
 .close {
   display: none;
 }
 
+
 .game-area {
   display: flex;
   flex-direction: row;
+  height: 100%;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  width: 25%;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .link-sword {
-  width: 20%;
+  width: 100%;
+}
+
+.links {
+  width: 65%;
   height: 20%;
+  background: white;
+  margin-bottom: 20px;
+}
+
+.middle-column {
+  width: 50%;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  width: 25%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-pane {
+  width: 85%;
+  height: 40%;
+  background: black;
+  align-self: center;
 }
 
 .link-bow {
+  width: 100%;
   align-self: flex-end;
-  width: 20%;
-  height: 20%;
 }
 
 .game-window {
   background: url('../light-world.gif');
   background-size: cover;
-  margin: 0 auto;
   border: 1px solid black;
 }
 
 .main-menu {
   width: 710px;
   height: 504px;
-  background: red;
+  background: black;
+  color: white;
   margin: 0 auto;
   border: 1px solid black;
 }
 
 .start-game-button {
-  font-family: ReturnofGanon;
+  font-family: returnofganon;
   text-align: center;
+  position: relative;
+  top: 45%;
+  font-size: 30px;
+}
+
+.start-game-button:hover {
+  cursor: pointer;
 }

@@ -10,18 +10,33 @@
   <body>
     <header>
       <div class="logo">LEGEND OF SCHMELDA</div>
+      <div class="logo2">Attack of the Clones</div>
     </header>
-    <audio controls autoplay loop>
+    <!-- <audio controls autoplay loop>
       <source src="./assets/Hyrule_Field.mp3" type="audio/mp3">
-    </audio>
+    </audio> -->
     <main>
       <div class='game-area'>
-        <img class="link-sword" src='./assets/link-sword.png'>
-        <section class="main-menu">
-          <div class="start-game-button">Start Game</div>
-        </section>
-        <canvas class="game-window close" width = "710" Height = "504"></canvas>
-        <img class="link-bow" src='./assets/link_bow.png'>
+        <div class="left-column">
+          <img class="link-sword" src='./assets/link-sword.png'>
+          <nav class="links">Links</nav>
+        </div>
+
+        <div ="middle-column">
+          <section class="main-menu">
+            <div class="start-game-button">Start Game</div>
+          </section>
+          <section class="game-over close">
+            
+          </section>
+          <canvas class="game-window close" width = "710" Height = "504"></canvas>
+        </div>
+
+        <div class="right-column">
+          <canvas class="info-pane"></canvas>
+          <img class="link-bow" src='./assets/link_bow.png'>
+        </div>
+
       </div>
     </main>
   </body>

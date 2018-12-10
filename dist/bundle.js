@@ -467,6 +467,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./arrow_item.js */ "./lib/arrow_item.js");
 /* harmony import */ var _heart_item_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./heart_item.js */ "./lib/heart_item.js");
 /* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
+/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./info.js */ "./lib/info.js");
+
 
 
 
@@ -482,8 +484,6 @@ class Game {
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
-    this.draw = this.draw.bind(this);
-    this.loop = this.loop.bind(this);
     this.keys = [];
     this.arrows = [];
     this.items = [];
@@ -491,12 +491,16 @@ class Game {
     this.isGameOver = false;
     this.score = 0;
 
+    this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
     this.startGameSound = new Audio('./assets/LTTP_Secret.wav')
 
+    this.draw = this.draw.bind(this);
+    this.loop = this.loop.bind(this);
     this.makeEnemy = this.makeEnemy.bind(this);
     this.makeArrow = this.makeArrow.bind(this);
     this.startGame = this.startGame.bind(this);
+    this.playTheme = this.playTheme.bind(this);
   }
 
   openMenu() {
@@ -519,7 +523,12 @@ class Game {
     gameWindow.className = 'game-window';
   }
 
+  playTheme() {
+    this.hyruleTheme.play()
+  }
+
   startGame() {
+    setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.makeObstacles();
     setInterval(this.makeEnemy, 2000)
@@ -635,7 +644,6 @@ class Game {
       )
       this.enemies.splice(idx, 1);
       this.score++;
-      console.log(`score: ${this.score}`);
     }
   }
 
@@ -645,7 +653,6 @@ class Game {
       if (this.link.life === 0) {
         this.isGameOver = true;
       }
-      console.log(`life: ${this.link.life}`)
     }
   }
 
@@ -729,7 +736,6 @@ class Game {
 
         this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_3__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
         this.link.ammo -= 1;
-        console.log(`ammo: ${this.link.ammo}`);
       }
     }
   }
@@ -856,6 +862,49 @@ class HeartItem extends _item__WEBPACK_IMPORTED_MODULE_0__["default"] {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (HeartItem);
+
+
+/***/ }),
+
+/***/ "./lib/info.js":
+/*!*********************!*\
+  !*** ./lib/info.js ***!
+  \*********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+class Info {
+  constructor(canvas, ctx, game) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    this.game = game;
+
+    this.draw = this.draw.bind(this);
+    this.loop = this.loop.bind(this);
+  }
+
+  draw() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    const life = `Life: ${this.game.link.life}`;
+    const arrows = `Arrows: ${this.game.link.ammo}`;
+    const score = `Score: ${this.game.score}`;
+    this.ctx.font = '40px returnofganon';
+    this.ctx.fillStyle = 'white';
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(life, 10, 40);
+    this.ctx.fillText(arrows, 10, 80);
+    this.ctx.fillText(score, 10, 120);
+  }
+
+  loop() {
+    this.draw();
+    window.requestAnimationFrame(this.loop);
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Info);
 
 
 /***/ }),
@@ -1001,8 +1050,8 @@ class Link {
     this.scale = 2.6;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
-    this.position = [this.canvas.width/2 - this.scaledWidth/2, this.canvas.height*.6];
-    this.currentDirection = 3;
+    this.position = [this.canvas.width/2 - this.scaledWidth/2, this.canvas.height/2];
+    this.currentDirection = 2;
     this.currentLoopIndex = 0;
     this.attackCurrentLoopIndex = 0;
     this.bowCurrentLoopIndex = 0;
@@ -1599,14 +1648,21 @@ class Obstacle {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _game_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./game.js */ "./lib/game.js");
+/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./info.js */ "./lib/info.js");
+
 
 
 document.addEventListener('DOMContentLoaded', ()=> {
   const mainCanvas = document.getElementsByClassName('game-window')[0];
+  const infoCanvas = document.getElementsByClassName('info-pane')[0];
   const ctx = mainCanvas.getContext('2d');
+  const ctxInfo = infoCanvas.getContext('2d');
 
-  const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
+
+  const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx);
+  const info = new _info_js__WEBPACK_IMPORTED_MODULE_1__["default"](infoCanvas, ctxInfo, game)
   game.openMenu();
+  info.loop();
   // game.startGame();
 });
 
