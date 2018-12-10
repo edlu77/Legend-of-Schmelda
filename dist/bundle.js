@@ -488,9 +488,11 @@ class Game {
     this.arrows = [];
     this.items = [];
     this.oldTime = Date.now();
+    this.isGameOver = false;
+    this.score = 0;
 
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
-    this.score = 0;
+    this.startGameSound = new Audio('./assets/LTTP_Secret.wav')
 
     this.makeEnemy = this.makeEnemy.bind(this);
     this.makeArrow = this.makeArrow.bind(this);
@@ -504,20 +506,20 @@ class Game {
   setStartButton() {
     const startGameButton = document.getElementsByClassName('start-game-button')[0]
     startGameButton.addEventListener('click', (e) => {
+      this.startGameSound.play();
       this.closeMainMenu();
-      this.startGame();
+      setTimeout(this.startGame, 800);
     });
   }
 
   closeMainMenu() {
     const mainMenu = document.getElementsByClassName('main-menu')[0];
     mainMenu.className = 'main-menu close';
-    this.startGame;
+    const gameWindow = document.getElementsByClassName('game-window close')[0];
+    gameWindow.className = 'game-window';
   }
 
   startGame() {
-    const gameWindow = document.getElementsByClassName('game-window close')[0];
-    gameWindow.className = 'game-window';
     this.combineListeners();
     this.makeObstacles();
     setInterval(this.makeEnemy, 2000)
@@ -565,19 +567,19 @@ class Game {
     this.drawEnemies();
     this.drawArrows();
     this.drawItems();
-    this.drawObstacles();
+    // this.drawObstacles();
   }
 
 
-  drawObstacles() {
-    for (var i = 0; i < this.obstacles.length; i++) {
-      this.ctx.beginPath();
-      this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
-      this.ctx.lineWidth = 1
-      this.ctx.strokeStyle = 'yellow';
-      this.ctx.stroke();
-    }
-  }
+  // drawObstacles() {
+  //   for (var i = 0; i < this.obstacles.length; i++) {
+  //     this.ctx.beginPath();
+  //     this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
+  //     this.ctx.lineWidth = 1
+  //     this.ctx.strokeStyle = 'yellow';
+  //     this.ctx.stroke();
+  //   }
+  // }
 
   handleObstacleCollisions() {
     for (let i = 0; i < this.obstacles.length; i++) {
@@ -640,6 +642,9 @@ class Game {
   checkDealtDamage(enemy) {
     if (this.link.collidedWith(enemy) && this.link.invincible === false && enemy.poofing === false) {
       this.link.damaged();
+      if (this.link.life === 0) {
+        this.isGameOver = true;
+      }
       console.log(`life: ${this.link.life}`)
     }
   }
@@ -781,8 +786,7 @@ class Game {
   }
 
   gameOver() {
-    if (this.link.life === 0) {
-
+    if (this.isGameOver) {
       console.log("You have died!")
     }
   }
@@ -1149,7 +1153,7 @@ class Link {
     this.invincible = true;
     this.linkHurtSound.play();
     // this.link.recoil();
-    this.link.life -= 1;
+    this.life -= 1;
     setTimeout(() => {this.stunned = false;}, 500) //stunned after hit
     setTimeout(() => {this.invincible = false;}, 2000) //invincible for short time after getting hit
   }
@@ -1190,11 +1194,11 @@ class Link {
       this.scaledWidth,
       this.scaledHeight,
     )
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   };
 
   step() {
@@ -1281,11 +1285,11 @@ class Link {
       attackWidth*this.scale,
       attackHeight*this.scale,
     )
-    this.ctx.beginPath();
-    this.ctx.rect(attackPosX, attackPosY, attackWidth*this.scale, attackHeight*this.scale)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(attackPosX, attackPosY, attackWidth*this.scale, attackHeight*this.scale)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   };
 
   swing() {
@@ -1535,11 +1539,11 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
       this.scale*frame[2],
       this.scale*frame[3],
     )
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   }
 
   draw() {

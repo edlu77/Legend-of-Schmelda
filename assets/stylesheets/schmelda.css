@@ -1,11 +1,16 @@
+@font-face {
+    font-family: "ReturnofGanon";
+    src: url('../returnofganon.ttf');
+}
+
 body {
-  background: green;
-  padding: 0;
+  background: linear-gradient(#489848, #285830);
   margin: 0;
 }
 
 header {
   text-align: center;
+  font-family: ReturnofGanon;
 }
 
 .close {
@@ -32,7 +37,7 @@ header {
   background: url('../light-world.gif');
   background-size: cover;
   margin: 0 auto;
-  border: 1px solid black
+  border: 1px solid black;
 }
 
 .main-menu {
@@ -44,4 +49,6 @@ header {
 }
 
 .start-game-button {
+  font-family: ReturnofGanon;
+  text-align: center;
 }
