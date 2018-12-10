@@ -494,12 +494,35 @@ class Game {
 
     this.makeEnemy = this.makeEnemy.bind(this);
     this.makeArrow = this.makeArrow.bind(this);
+    this.startGame = this.startGame.bind(this);
+  }
 
+  openMenu() {
+    this.setStartButton();
+  }
+
+  setStartButton() {
+    const startGameButton = document.getElementsByClassName('start-game-button')[0]
+    startGameButton.addEventListener('click', (e) => {
+      this.closeMainMenu();
+      this.startGame();
+    });
+  }
+
+  closeMainMenu() {
+    const mainMenu = document.getElementsByClassName('main-menu')[0];
+    mainMenu.className = 'main-menu close';
+    this.startGame;
+  }
+
+  startGame() {
+    const gameWindow = document.getElementsByClassName('game-window close')[0];
+    gameWindow.className = 'game-window';
     this.combineListeners();
     this.makeObstacles();
     setInterval(this.makeEnemy, 2000)
+    this.loop()
   }
-
 
   combineListeners() {
     document.addEventListener('keydown', this.link.getMoveKeys);
@@ -508,6 +531,16 @@ class Game {
     document.addEventListener('keyup', this.link.stopWalking);
     document.addEventListener('keydown', this.link.attack);
     document.addEventListener('keydown', this.link.useBow)
+  }
+
+  makeObstacles() {
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 0], 355, 23))
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 32], 25, 72));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 193], 79, 48));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 241], 96, 11));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([329, 29], 26, 72));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([268, 195], 87, 57));
+    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([252, 244], 16, 8));
   }
 
   loop() {
@@ -535,15 +568,6 @@ class Game {
     this.drawObstacles();
   }
 
-  makeObstacles() {
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 0], 355, 23))
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 32], 25, 72));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 193], 79, 48));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 241], 96, 11));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([329, 29], 26, 72));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([268, 195], 87, 57));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([252, 244], 16, 8));
-  }
 
   drawObstacles() {
     for (var i = 0; i < this.obstacles.length; i++) {
@@ -762,6 +786,9 @@ class Game {
       console.log("You have died!")
     }
   }
+
+
+
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
@@ -1571,11 +1598,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 document.addEventListener('DOMContentLoaded', ()=> {
-  const mainCanvas = document.getElementById('main-window');
+  const mainCanvas = document.getElementsByClassName('game-window')[0];
   const ctx = mainCanvas.getContext('2d');
 
   const game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](mainCanvas, ctx)
-  game.loop();
+  game.openMenu();
+  // game.startGame();
 });
 
 

@@ -3,19 +3,26 @@
   <head>
     <meta charset="utf-8">
     <title>Schmelda</title>
-    <style>
-      * { background: #489848; padding: 0; margin: 0; }
-      canvas { background: url('./assets/light-world.gif'); background-size: cover; margin: 0 auto; border: 1px solid black }
-    </style>
+    <link rel="stylesheet" type="text/css" href="./assets/stylesheets/reset.css" />
+    <link rel="stylesheet" type="text/css" href="./assets/stylesheets/schmelda.css" />
     <script type="text/javascript" src="./dist/bundle.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="logo">LEGEND OF SCHMELDA</div>
+    </header>
     <audio controls autoplay loop>
       <source src="./assets/Hyrule_Field.mp3" type="audio/mp3">
     </audio>
-  </head>
-  <body>
-    <!-- <canvas id="breakout" width="480" height="320"></canvas> -->
-    <canvas id="main-window" width = "710" Height = "504"></canvas>
     <main>
+      <div class='game-area'>
+        <img class="link-sword" src='./assets/link-sword.png'>
+        <section class="main-menu">
+          <div class="start-game-button">Start Game</div>
+        </section>
+        <canvas class="game-window close" width = "710" Height = "504"></canvas>
+        <img class="link-bow" src='./assets/link_bow.png'>
+      </div>
     </main>
   </body>
 </html>

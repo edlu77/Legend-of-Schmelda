@@ -1,0 +1,47 @@
+body {
+  background: green;
+  padding: 0;
+  margin: 0;
+}
+
+header {
+  text-align: center;
+}
+
+.close {
+  display: none;
+}
+
+.game-area {
+  display: flex;
+  flex-direction: row;
+}
+
+.link-sword {
+  width: 20%;
+  height: 20%;
+}
+
+.link-bow {
+  align-self: flex-end;
+  width: 20%;
+  height: 20%;
+}
+
+.game-window {
+  background: url('../light-world.gif');
+  background-size: cover;
+  margin: 0 auto;
+  border: 1px solid black
+}
+
+.main-menu {
+  width: 710px;
+  height: 504px;
+  background: red;
+  margin: 0 auto;
+  border: 1px solid black;
+}
+
+.start-game-button {
+}
