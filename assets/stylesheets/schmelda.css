@@ -8,10 +8,17 @@
     src: url('../CharlemagneBold.otf');
 }
 
+html {
+   margin: 0px;
+   height: 100%;
+   width: 100%;
+}
+
 body {
   background: linear-gradient(#489848, #285830);
   margin: 0;
   display: flex;
+  min-height: 100%;
   flex-direction: column;
 }
 
@@ -20,7 +27,7 @@ header {
   text-align: center;
   font-family: charlemagne;
   font-weight: bolder;
-  margin-bottom: 10px;
+  /* padding: 20px; */
 }
 
 main {
@@ -29,6 +36,7 @@ main {
 
 .logo {
   font-size: 40px;
+  color: gold;
 }
 
 .logo2 {
@@ -71,6 +79,7 @@ a > img {
 .middle-column {
   display: flex;
   width: 50%;
+  height: 100%
 }
 
 .right-column {
@@ -119,4 +128,10 @@ a > img {
 
 .start-game-button:hover {
   cursor: pointer;
+}
+
+.game-over {
+  width: 710px;
+  height: 504px;
+  background: white;
 }

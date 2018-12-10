@@ -490,10 +490,12 @@ class Game {
     this.oldTime = Date.now();
     this.isGameOver = false;
     this.score = 0;
+    this.canRestart = false;
 
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
+    this.gameOverTheme = new Audio('./assets/Kakariko_Village.mp3');
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
-    this.startGameSound = new Audio('./assets/LTTP_Secret.wav')
+    this.startGameSound = new Audio('./assets/LTTP_Secret.wav');
 
     this.draw = this.draw.bind(this);
     this.loop = this.loop.bind(this);
@@ -501,6 +503,7 @@ class Game {
     this.makeArrow = this.makeArrow.bind(this);
     this.startGame = this.startGame.bind(this);
     this.playTheme = this.playTheme.bind(this);
+    this.restartGame = this.restartGame.bind(this);
   }
 
   openMenu() {
@@ -511,28 +514,73 @@ class Game {
     const startGameButton = document.getElementsByClassName('start-game-button')[0]
     startGameButton.addEventListener('click', (e) => {
       this.startGameSound.play();
-      this.closeMainMenu();
+      this.openGameWindow();
       setTimeout(this.startGame, 800);
     });
   }
 
-  closeMainMenu() {
+  openGameWindow() {
     const mainMenu = document.getElementsByClassName('main-menu')[0];
     mainMenu.className = 'main-menu close';
-    const gameWindow = document.getElementsByClassName('game-window close')[0];
+    const gameOver = document.getElementsByClassName('game-over')[0];
+    gameOver.className = 'game-over close';
+    const gameWindow = document.getElementsByClassName('game-window')[0];
     gameWindow.className = 'game-window';
   }
 
   playTheme() {
-    this.hyruleTheme.play()
+    this.gameOverTheme.pause();
+    this.hyruleTheme.play();
   }
 
   startGame() {
+    this.isGameOver = false;
+    this.canRestart = false;
+    this.arrows = [];
+    this.items = [];
+    this.enemies = [];
+    this.score = 0;
+    this.oldTime = Date.now();
+    this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx);
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.makeObstacles();
-    setInterval(this.makeEnemy, 2000)
+    // setInterval(this.makeEnemy, 2000)
     this.loop()
+  }
+
+  stopGame() {
+    this.hyruleTheme.pause();
+    this.enemies = [];
+    const gameWindow = document.getElementsByClassName('game-window')[0];
+    gameWindow.className = 'game-window close';
+  }
+
+  gameOver() {
+    if (this.isGameOver) {
+      // console.log("You have died!")
+      this.canRestart = true;
+      this.stopGame();
+      const gameOver = document.getElementsByClassName('game-over')[0];
+      gameOver.className = 'game-over';
+      this.gameOverTheme.play();
+
+    }
+  }
+
+  restartGame(e) {
+    if (this.canRestart) {
+      const restartButton = document.getElementsByClassName('restart-button')[0]
+      if (e.target === restartButton) {
+        this.startGameSound.play()
+        this.openGameWindow();
+        setTimeout(this.startGame, 800);
+      }
+    }
+  }
+
+  muteMusic() {
+
   }
 
   combineListeners() {
@@ -541,7 +589,8 @@ class Game {
     document.addEventListener('keyup', this.link.deleteMoveKeys);
     document.addEventListener('keyup', this.link.stopWalking);
     document.addEventListener('keydown', this.link.attack);
-    document.addEventListener('keydown', this.link.useBow)
+    document.addEventListener('keydown', this.link.useBow);
+    document.addEventListener('click', this.restartGame);
   }
 
   makeObstacles() {
@@ -555,19 +604,22 @@ class Game {
   }
 
   loop() {
-    this.update();
-    this.draw();
-    window.requestAnimationFrame(this.loop)
+    if (!this.isGameOver) {
+      this.update();
+      this.draw();
+      window.requestAnimationFrame(this.loop)
+    }
   }
 
   update() {
-    this.gameOver();
     this.handleObstacleCollisions();
+    this.makeEnemy();
     this.updateEnemies();
     this.avoidOverlap();
     this.updateArrows();
     this.makeArrow();
     this.updateItems();
+    this.gameOver();
   }
 
   draw() {
@@ -607,8 +659,10 @@ class Game {
   }
 
   makeEnemy() {
-    if (this.enemies.length < 10) {
+    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 10 && !this.isGameOver) {
       this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
+      console.log("new enemy")
+      this.oldTime = Date.now();
     }
   }
 
@@ -790,15 +844,6 @@ class Game {
       }
     }
   }
-
-  gameOver() {
-    if (this.isGameOver) {
-      console.log("You have died!")
-    }
-  }
-
-
-
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
