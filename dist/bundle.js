@@ -699,7 +699,6 @@ class Game {
   makeEnemy() {
     if (Date.now() - this.oldTime > 2000 && this.enemies.length < 10 && !this.isGameOver) {
       this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
-      console.log("new enemy")
       this.oldTime = Date.now();
     }
   }
