@@ -6,14 +6,15 @@ Legend of Schmelda is a 2-D combat game based on Legend of Zelda. The player con
 
 # Controls
 
-WASD to move around the screen
-H to swing the sword
+* WASD to move around the screen
+* H to swing the sword
+* B to shoot the bow
 
 # MVPs
 
 1) Move around different areas of the screen
 2) Enemies that can attack you and vice versa
-3) Items / Powerups
+3) Bow and arrows
 4) User interface
 
 # Technologies
@@ -32,16 +33,14 @@ Day 1: Figure out how to render a screen and make sprites move around the map.
 * Control player movement with event listeners
 
 Day 2: Implement combat.
-* Attacking enemies
+* Attacking enemies with the sword
 * Enemies that attack you
-* Make various enemy types with different movement patterns.
 
 Day 3: Implement items / abilities.
 * Bow that can shoot arrows at enemies (limited ammo)
-* Bombs
-* Collecting 3 Triforce pieces gives a special ability that clears all enemies from the screen (bonus?)
 
 Day 4: Make the UI
 * Health indicator
-* Currently equipped items
+* Arrow counter
+* Current score
 * Intro and game over screens
