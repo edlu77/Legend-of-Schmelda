@@ -621,7 +621,6 @@ class Game {
 
   combineListeners() {
     document.addEventListener('keydown', this.link.getMoveKeys);
-    document.addEventListener('keydown', this.link.move);
     document.addEventListener('keyup', this.link.deleteMoveKeys);
     document.addEventListener('keyup', this.link.stopWalking);
     document.addEventListener('keydown', this.link.attack);
@@ -650,6 +649,7 @@ class Game {
   }
 
   update() {
+    this.link.move();
     this.handleObstacleCollisions();
     this.makeEnemy();
     this.updateEnemies();
@@ -1186,6 +1186,10 @@ class Link {
     this.firingBow = false;
     this.ammo = 5;
     this.life = 3;
+    this.right = false;
+    this.left = false;
+    this.down = false;
+    this.up = false;
 
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
@@ -1382,54 +1386,92 @@ class Link {
         this.frameCount++
         return
       }
+      // this.frameCount = 0;
+    //   this.currentLoopIndex++;
+    //   if (this.currentLoopIndex >= numFrames) {
+    //     this.currentLoopIndex = 0;
+    //   this.drawWalkFrame(
+    //     directions[this.currentDirection],
+    //     cycleLoop[this.currentLoopIndex],
+    //   );
+    //   }
+    //
+    // }
       this.frameCount = 0;
       this.currentLoopIndex++;
-
-      this.drawWalkFrame(
-        directions[this.currentDirection],
-        cycleLoop[this.currentLoopIndex],
-      );
-      if (this.currentLoopIndex >= cycleLoop.length) {
+      if (this.currentLoopIndex >= numFrames) {
         this.currentLoopIndex = 0;
       }
+      this.drawWalkFrame(
+        directions[this.currentDirection],
+        this.currentLoopIndex,
+      );
     }
   };
 
   getMoveKeys(e) {
     this.keys = (this.keys || []);
     this.keys[e.keyCode] = true;
+    if (this.keys[83]) {
+      this.down = true;
+    }
+    if (this.keys[87]) {
+      this.up = true;
+    }
+    if (this.keys[65]) {
+      this.left = true;
+    }
+    if (this.keys[68]) {
+      this.right = true;
+    }
   }
 
   deleteMoveKeys(e) {
     this.keys[e.keyCode] = false;
+    if (!this.keys[83]) {
+      this.down = false;
+    }
+    if (!this.keys[87]) {
+      this.up = false;
+    }
+    if (!this.keys[65]) {
+      this.left = false;
+    }
+    if (!this.keys[68]) {
+      this.right = false;
+    }
   }
 
-  move(e) {
+  move() {
     if (this.stunned || this.attacking) {
       return
     }
-    if (this.keys[83]) {
+    if (this.down) {
       this.walking = true
       this.attacking = false;
-      this.position[1] += 15;
+      this.firingBow = false;
+      this.position[1] += 3;
       this.currentDirection = 2;
     }
-    if (this.keys[87]) {
+    if (this.up) {
       this.walking = true
       this.attacking = false;
-      this.position[1] -= 15;
+      this.firingBow = false;
+      this.position[1] -= 3;
       this.currentDirection = 3;
     }
-    if (this.keys[65]) {
+    if (this.left) {
       this.walking = true
       this.attacking = false;
-      this.position[0] -= 15;
+      this.firingBow = false;
+      this.position[0] -= 3;
       this.currentDirection = 1;
     }
-    if (this.keys[68]) {
+    if (this.right) {
       this.walking = true
       this.attacking = false;
-      this.position[0] += 15;
+      this.firingBow = false;
+      this.position[0] += 3;
       this.currentDirection = 0;
     }
   };
@@ -1537,7 +1579,7 @@ class Link {
   }
 
   useBow(e) {
-    if ((this.stunned || this.firingBow || this.attacking)) {
+    if ((this.stunned || this.firingBow || this.attacking || this.walking)) {
       return;
     }
     if (this.keys[66] && this.ammo > 0) {
@@ -1658,7 +1700,7 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.height = 26;
     this.life = 3;
     this.scale = 2.6;
-    this.speed = .5 + Math.random();
+    this.speed = .4 + Math.random();
     this.scaledWidth = this.width*this.scale;
     this.scaledHeight = this.height*this.scale;
   }
