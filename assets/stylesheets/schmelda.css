@@ -116,10 +116,10 @@ a > img {
   color: white;
   margin: 0 auto;
   border: 1px solid black;
+  font-family: returnofganon;
 }
 
 .start-game-button {
-  font-family: returnofganon;
   text-align: center;
   position: relative;
   top: 45%;
@@ -131,7 +131,28 @@ a > img {
 }
 
 .game-over {
+  font-size: 30px;
   width: 710px;
   height: 504px;
-  background: white;
+  background: black;
+  color: white;
+  font-family: returnofganon;
+}
+
+.game-over-text {
+  text-align: center;
+  position: relative;
+  top: 45%;
+  font-size: 30px;
+}
+
+.hidden {
+  display: none;
+}
+
+.music-button {
+  position: absolute;
+  z-index: 1;
+  left: 330px;
+  top: 50px;
 }

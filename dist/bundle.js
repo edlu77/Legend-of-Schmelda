@@ -491,6 +491,8 @@ class Game {
     this.isGameOver = false;
     this.score = 0;
     this.canRestart = false;
+    this.currentMusic = null;
+    this.musicMuted = false;
 
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
     this.gameOverTheme = new Audio('./assets/Kakariko_Village.mp3');
@@ -504,6 +506,8 @@ class Game {
     this.startGame = this.startGame.bind(this);
     this.playTheme = this.playTheme.bind(this);
     this.restartGame = this.restartGame.bind(this);
+    this.muteMusic = this.muteMusic.bind(this);
+    this.onMusic = this.onMusic.bind(this);
   }
 
   openMenu() {
@@ -529,11 +533,21 @@ class Game {
   }
 
   playTheme() {
+    this.currentMusic = this.hyruleTheme;
     this.gameOverTheme.pause();
     this.hyruleTheme.play();
   }
 
   startGame() {
+    const musicOffButton = document.getElementsByClassName('music-button off')[0];
+    const musicOnButton = document.getElementsByClassName('music-button on')[0];
+    if (this.musicMuted) {
+      musicOffButton.className = 'music-button off hidden';
+      musicOnButton.className = 'music-button on';
+    } else {
+      musicOffButton.className = 'music-button off';
+      musicOnButton.className = 'music-button on hidden';
+    }
     this.isGameOver = false;
     this.canRestart = false;
     this.arrows = [];
@@ -545,12 +559,10 @@ class Game {
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.makeObstacles();
-    // setInterval(this.makeEnemy, 2000)
     this.loop()
   }
 
   stopGame() {
-    this.hyruleTheme.pause();
     this.enemies = [];
     const gameWindow = document.getElementsByClassName('game-window')[0];
     gameWindow.className = 'game-window close';
@@ -558,13 +570,15 @@ class Game {
 
   gameOver() {
     if (this.isGameOver) {
-      // console.log("You have died!")
       this.canRestart = true;
       this.stopGame();
       const gameOver = document.getElementsByClassName('game-over')[0];
       gameOver.className = 'game-over';
-      this.gameOverTheme.play();
-
+      this.hyruleTheme.pause();
+      this.currentMusic = this.gameOverTheme;
+      if (!this.musicMuted) {
+        this.gameOverTheme.play();
+      }
     }
   }
 
@@ -579,8 +593,30 @@ class Game {
     }
   }
 
-  muteMusic() {
+  muteMusic(e) {
+    const musicOffButton = document.getElementsByClassName('music-button off')[0];
+    const musicOnButton = document.getElementsByClassName('music-button on')[0];
+    if (!this.musicMuted) {
+      if (e.target === musicOffButton) {
+        this.currentMusic.pause();
+        this.musicMuted = true;
+        musicOffButton.className = 'music-button off hidden';
+        musicOnButton.className = 'music-button on';
+      }
+    }
+  }
 
+  onMusic(e) {
+    const musicOnButton = document.getElementsByClassName('music-button on')[0];
+    const musicOffButton = document.getElementsByClassName('music-button off')[0];
+    if (this.musicMuted) {
+      if (e.target === musicOnButton) {
+        this.currentMusic.play();
+        this.musicMuted = false;
+        musicOnButton.className = 'music-button on hidden';
+        musicOffButton.className = 'music-button off';
+      }
+    }
   }
 
   combineListeners() {
@@ -591,6 +627,8 @@ class Game {
     document.addEventListener('keydown', this.link.attack);
     document.addEventListener('keydown', this.link.useBow);
     document.addEventListener('click', this.restartGame);
+    document.addEventListener('click', this.muteMusic);
+    document.addEventListener('click', this.onMusic);
   }
 
   makeObstacles() {
@@ -824,7 +862,7 @@ class Game {
       case 0:
         return [-50, (104 + Math.random()*21)*2] //left side
       case 1:
-        return [this.canvas.width+50, (104 + Math.random()*21)*2] //right side
+        return [this.canvas.width+50, (110 + Math.random()*20)*2] //right side
       case 2:
         return [(96 + Math.random()*63)*2, this.canvas.height+ 50] //bottom side
       case 3:
@@ -1148,7 +1186,7 @@ class Link {
     this.invincible = false;
     this.firingBow = false;
     this.ammo = 5;
-    this.life = 5;
+    this.life = 3;
 
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
@@ -1533,7 +1571,7 @@ class Link {
     this.getItemSound.play();
     if (item instanceof _arrow_item__WEBPACK_IMPORTED_MODULE_0__["default"]) {
       this.ammo += item.value;
-    } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"]) {
+    } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"] && this.life <= 6) {
       this.life++;
     }
   }
@@ -1621,7 +1659,7 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.height = 26;
     this.life = 3;
     this.scale = 2.6;
-    this.speed = 1;
+    this.speed = .5 + Math.random();
     this.scaledWidth = this.width*this.scale;
     this.scaledHeight = this.height*this.scale;
   }
@@ -1745,7 +1783,6 @@ document.addEventListener('DOMContentLoaded', ()=> {
   const info = new _info_js__WEBPACK_IMPORTED_MODULE_1__["default"](infoCanvas, ctxInfo, game)
   game.openMenu();
   info.loop();
-  // game.startGame();
 });
 
 
