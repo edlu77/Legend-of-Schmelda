@@ -126,6 +126,13 @@ a > img {
   font-size: 30px;
 }
 
+.instructions {
+  text-align: center;
+  position: relative;
+  top: 60%;
+  font-size: 30px;
+}
+
 .start-game-button:hover {
   cursor: pointer;
 }
