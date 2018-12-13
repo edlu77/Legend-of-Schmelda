@@ -27,7 +27,7 @@ header {
   text-align: center;
   font-family: charlemagne;
   font-weight: bolder;
-  /* padding: 20px; */
+  padding: 20px;
 }
 
 main {
@@ -73,7 +73,7 @@ main {
 }
 
 a > img {
-  width: 33%;
+  width: 50%;
 }
 
 .middle-column {
