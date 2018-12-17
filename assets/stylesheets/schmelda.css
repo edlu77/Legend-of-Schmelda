@@ -20,18 +20,14 @@ body {
   display: flex;
   min-height: 100%;
   flex-direction: column;
+  align-items: center;
 }
 
 header {
-  height: 10%;
   text-align: center;
   font-family: charlemagne;
   font-weight: bolder;
-  padding: 20px;
-}
-
-main {
-  height: 90%;
+  margin-bottom: 20px;
 }
 
 .logo {
@@ -48,10 +44,10 @@ main {
 }
 
 .game-area {
+  margin: 0 auto;
   display: flex;
   flex-direction: row;
   height: 100%;
-  margin-bottom: 20px;
 }
 
 .left-column {
@@ -63,17 +59,19 @@ main {
 }
 
 .link-sword {
-  width: 100%;
+  width: 247px;
+  height: 225.5px;
 }
 
 .links {
   display: flex;
-  width: 65%;
-  height: 10%;
+  align-items: center;
+  width: 60%;
 }
 
 a > img {
   width: 50%;
+  margin: 0 auto;
 }
 
 .middle-column {
@@ -96,7 +94,8 @@ a > img {
 }
 
 .link-bow {
-  width: 100%;
+  width: 246.18px;
+  height: 197.67px;
   align-self: flex-end;
 }
 
@@ -139,6 +138,7 @@ a > img {
 
 .game-over {
   font-size: 30px;
+  border: 1px solid black;
   width: 710px;
   height: 504px;
   background: black;
@@ -160,6 +160,4 @@ a > img {
 .music-button {
   position: absolute;
   z-index: 1;
-  left: 330px;
-  top: 50px;
 }
