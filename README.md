@@ -2,45 +2,77 @@
 
 # Overview
 
-Legend of Schmelda is a 2-D combat game based on Legend of Zelda. The player controls a hero who will fight off waves of enemies that grow progressively more difficult. Enemies can also drop items that give the player abilities to help in the fight.
+Legend of Schmelda is a 2-D combat game based on Legend of Zelda. The player controls a hero who will fight off waves of enemies until their life runs out.
 
-# Controls
+# Instructions and Controls
 
+Instructions
+
+The goal of the game is to kill as many enemies as possible until your life is zero. Swing the sword and shoot your bow to defeat them! Enemies killed have a chance to drop extra health as well as arrows for your bow.
+
+Controls
 * WASD to move around the screen
 * H to swing the sword
 * B to shoot the bow
 
-# MVPs
+# Features and Implementation
 
-1) Move around different areas of the screen
-2) Enemies that can attack you and vice versa
-3) Bow and arrows
-4) User interface
+This project uses Javascript for game logic and HTML5 Canvas to render the images.
 
-# Technologies
+The main game loop function continuously updates the attributes of all objects in the game, renders the images on the canvas object, and calls window.requestAnimationFrame on the loop function until the game is over.
 
-This project will use Javascript for game logic and HTML5 Canvas to render the images.
+```
+loop() {
+  if (!this.isGameOver) {
+    this.update();
+    this.draw();
+    window.requestAnimationFrame(this.loop)
+  }
+}
 
-# Wireframes
+update() {
+  this.link.move();
+  this.handleObstacleCollisions();
+  this.makeEnemy();
+  this.updateEnemies();
+  this.avoidOverlap();
+  this.updateArrows();
+  this.makeArrow();
+  this.updateItems();
+  this.gameOver();
+}
 
-(To be added soon)
+draw() {
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+  this.link.draw();
+  this.drawEnemies();
+  this.drawArrows();
+  this.drawItems();
+  // this.drawObstacles();
+}
+```
 
-# Implementation Timeline
+Collisions and Hitboxes
 
-Day 1: Figure out how to render a screen and make sprites move around the map.
-* Learn how to use canvas
-* Animating sprites
-* Control player movement with event listeners
+Objects include the player, enemies, arrows, enemies, and items. Each object has a hitbox attribute which is used to store the location and boundaries of the object. Collisions between objects are detected using a collidedWith function. For example, enemies have the following collision function:
 
-Day 2: Implement combat.
-* Attacking enemies with the sword
-* Enemies that attack you
+```
+collidedWith(object) {
+  let enemyHit = this.hitbox()
+  let objectHit = object.hitbox()
+  if (enemyHit.x < objectHit.x + objectHit.width && enemyHit.x + enemyHit.width > objectHit.x
+      && enemyHit.y < objectHit.y + objectHit.height && enemyHit.y + enemyHit.height > objectHit.y) {
+    return true;
+  } else {
+    return false;
+  }
+};
+```
 
-Day 3: Implement items / abilities.
-* Bow that can shoot arrows at enemies (limited ammo)
+Sword collisions are handled similarly, except the damaging area is represented by a "hurtbox" that only appears when the player is swinging the sword.
 
-Day 4: Make the UI
-* Health indicator
-* Arrow counter
-* Current score
-* Intro and game over screens
+# Future Directions
+
+* Additional levels
+* Different enemies
+* More items and abilities

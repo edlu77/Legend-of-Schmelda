@@ -494,6 +494,7 @@ class Game {
     this.currentMusic = null;
     this.musicMuted = false;
 
+    this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
     this.gameOverTheme = new Audio('./assets/Kakariko_Village.mp3');
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
@@ -511,6 +512,19 @@ class Game {
   }
 
   openMenu() {
+    const musicOffButton = document.getElementsByClassName('music-button off')[0];
+    const musicOnButton = document.getElementsByClassName('music-button on')[0];
+    if (this.musicMuted) {
+      musicOffButton.className = 'music-button off hidden';
+      musicOnButton.className = 'music-button on';
+    } else {
+      musicOffButton.className = 'music-button off';
+      musicOnButton.className = 'music-button on hidden';
+    }
+    this.currentMusic = this.mainMenuTheme;
+    this.playTheme();
+    document.addEventListener('click', this.muteMusic);
+    document.addEventListener('click', this.onMusic);
     this.setStartButton();
   }
 
@@ -518,6 +532,7 @@ class Game {
     const startGameButton = document.getElementsByClassName('start-game-button')[0]
     startGameButton.addEventListener('click', (e) => {
       this.startGameSound.play();
+      this.currentMusic.pause();
       this.openGameWindow();
       setTimeout(this.startGame, 800);
     });
@@ -533,22 +548,12 @@ class Game {
   }
 
   playTheme() {
-    this.currentMusic = this.hyruleTheme;
     if (!this.musicMuted) {
-      this.hyruleTheme.play();
+      this.currentMusic.play();
     }
   }
 
   startGame() {
-    const musicOffButton = document.getElementsByClassName('music-button off')[0];
-    const musicOnButton = document.getElementsByClassName('music-button on')[0];
-    if (this.musicMuted) {
-      musicOffButton.className = 'music-button off hidden';
-      musicOnButton.className = 'music-button on';
-    } else {
-      musicOffButton.className = 'music-button off';
-      musicOnButton.className = 'music-button on hidden';
-    }
     this.isGameOver = false;
     this.canRestart = false;
     this.arrows = [];
@@ -557,10 +562,11 @@ class Game {
     this.score = 0;
     this.oldTime = Date.now();
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx);
+    this.currentMusic = this.hyruleTheme;
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.makeObstacles();
-    this.loop()
+    this.loop();
   }
 
   stopGame() {
@@ -575,11 +581,9 @@ class Game {
       this.stopGame();
       const gameOver = document.getElementsByClassName('game-over')[0];
       gameOver.className = 'game-over';
-      this.hyruleTheme.pause();
+      this.currentMusic.pause();
       this.currentMusic = this.gameOverTheme;
-      if (!this.musicMuted) {
-        this.gameOverTheme.play();
-      }
+      this.playTheme();
     }
   }
 
@@ -628,8 +632,7 @@ class Game {
     document.addEventListener('keydown', this.link.attack);
     document.addEventListener('keydown', this.link.useBow);
     document.addEventListener('click', this.restartGame);
-    document.addEventListener('click', this.muteMusic);
-    document.addEventListener('click', this.onMusic);
+
   }
 
   makeObstacles() {
@@ -1614,7 +1617,7 @@ class Link {
     this.getItemSound.play();
     if (item instanceof _arrow_item__WEBPACK_IMPORTED_MODULE_0__["default"]) {
       this.ammo += item.value;
-    } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"] && this.life <= 6) {
+    } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"] && this.life <= 5) {
       this.life++;
     }
   }
