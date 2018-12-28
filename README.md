@@ -6,11 +6,11 @@ Legend of Schmelda is a 2-D combat game based on Legend of Zelda. The player con
 
 # Instructions and Controls
 
-Instructions
+**Instructions**
 
 The goal of the game is to kill as many enemies as possible until your life is zero. Swing the sword and shoot your bow to defeat them! Enemies killed have a chance to drop extra health as well as arrows for your bow.
 
-Controls
+**Controls**
 * WASD to move around the screen
 * H to swing the sword
 * B to shoot the bow
@@ -18,6 +18,8 @@ Controls
 # Features and Implementation
 
 This project uses Javascript for game logic and HTML5 Canvas to render the images.
+
+**Game Loop**
 
 The main game loop function continuously updates the attributes of all objects in the game, renders the images on the canvas object, and calls window.requestAnimationFrame on the loop function until the game is over.
 
@@ -52,7 +54,7 @@ draw() {
 }
 ```
 
-Collisions and Hitboxes
+**Collisions and Hitboxes**
 
 Objects include the player, enemies, arrows, enemies, and items. Each object has a hitbox attribute which is used to store the location and boundaries of the object. Collisions between objects are detected using a collidedWith function. For example, enemies have the following collision function:
 
