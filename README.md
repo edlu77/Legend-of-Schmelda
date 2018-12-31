@@ -23,7 +23,7 @@ This project uses Javascript for game logic and HTML5 Canvas to render the image
 
 The main game loop function continuously updates the attributes of all objects in the game, renders the images on the canvas object, and calls window.requestAnimationFrame on the loop function until the game is over.
 
-```
+```javascript
 loop() {
   if (!this.isGameOver) {
     this.update();
@@ -58,7 +58,7 @@ draw() {
 
 Objects include the player, enemies, arrows, enemies, and items. Each object has a hitbox attribute which is used to store the location and boundaries of the object. Collisions between objects are detected using a collidedWith function. For example, enemies have the following collision function:
 
-```
+```javascript
 collidedWith(object) {
   let enemyHit = this.hitbox()
   let objectHit = object.hitbox()
