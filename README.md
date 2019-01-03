@@ -1,5 +1,7 @@
 # Legend of Schmelda
 
+[Live Link](https://edlu77.github.io/Legend-of-Schmelda/)
+
 # Overview
 
 Legend of Schmelda is a 2-D combat game based on Legend of Zelda. The player controls a hero who will fight off waves of enemies until their life runs out.
@@ -50,7 +52,6 @@ draw() {
   this.drawEnemies();
   this.drawArrows();
   this.drawItems();
-  // this.drawObstacles();
 }
 ```
 
