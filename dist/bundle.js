@@ -286,9 +286,11 @@ class Enemy {
     this.deathPoof.src = './assets/death-effects.png';
     this.dead = false;
     this.poofing = false;
+    this.flashing = false;
   }
 
   recoil(attackedSide) {
+    this.flashing = true;
     if (attackedSide === 0) {
       this.position = [this.position[0] + 50, this.position[1]]
     } else if (attackedSide === 1) {
@@ -299,6 +301,12 @@ class Enemy {
       this.position = [this.position[0], this.position[1] - 50]
     }
   };
+
+  damaged() {
+    this.flashing = true;
+    this.life -= 1;
+    setTimeout(() => {this.flashing = false;}, 2000)
+  }
 
   drawDeathPoof(frame) {
     this.ctx.drawImage(
@@ -316,6 +324,7 @@ class Enemy {
 
   poof() {
     if (this.poofing) {
+      this.flashing = false;
       let currentFrame = DEATH_POOF[this.poofCurrentLoopIndex]
       let numFrames = 4;
       if (this.poofFrameCount < 5) {
@@ -754,12 +763,12 @@ class Game {
 
   checkAttacked(enemy) {
     if (this.link.attackedObject(enemy)) {
-      enemy.life -= 1;
-      if (enemy.life <= 0) {
+      if (enemy.life <= 1) {
         enemy.enemyDeathSound.play();
         enemy.dead = true;
         enemy.poofing = true;
       } else {
+        enemy.damaged();
         enemy.recoil(this.link.currentDirection);
       }
     }
@@ -769,12 +778,12 @@ class Game {
     for (let j = 0; j < this.arrows.length; j++) {
       if (enemy.collidedWith(this.arrows[j])) {
         this.arrowHitSound.play();
-        enemy.life -= 1;
-        if (enemy.life <= 0) {
+        if (enemy.life <= 1) {
           enemy.enemyDeathSound.play();
           enemy.dead = true;
           enemy.poofing = true;
         } else {
+          enemy.damaged();
           enemy.recoil(this.arrows[j].direction);
         }
         this.arrows.splice(j, 1);
@@ -1415,34 +1424,35 @@ class Link {
   };
 
   getMoveKeys(e) {
+    e.preventDefault();
     this.keys = (this.keys || []);
     this.keys[e.keyCode] = true;
-    if (this.keys[83]) {
+    if (this.keys[40]) {
       this.down = true;
     }
-    if (this.keys[87]) {
+    if (this.keys[38]) {
       this.up = true;
     }
-    if (this.keys[65]) {
+    if (this.keys[37]) {
       this.left = true;
     }
-    if (this.keys[68]) {
+    if (this.keys[39]) {
       this.right = true;
     }
   }
 
   deleteMoveKeys(e) {
     this.keys[e.keyCode] = false;
-    if (!this.keys[83]) {
+    if (!this.keys[40]) {
       this.down = false;
     }
-    if (!this.keys[87]) {
+    if (!this.keys[38]) {
       this.up = false;
     }
-    if (!this.keys[65]) {
+    if (!this.keys[37]) {
       this.left = false;
     }
-    if (!this.keys[68]) {
+    if (!this.keys[39]) {
       this.right = false;
     }
   }
@@ -1538,10 +1548,11 @@ class Link {
   }
 
   attack(e) {
+    e.preventDefault();
     if ((this.stunned || this.firingBow || this.attacking)) {
       return;
     }
-    if (this.keys[72]) {
+    if (this.keys[32]) {
       const swordSoundIdx = Math.floor(Math.random()*2)
       this.swordSwingSounds[swordSoundIdx].play();
       this.walking = false;
@@ -1584,6 +1595,7 @@ class Link {
   }
 
   useBow(e) {
+    e.preventDefault();
     if ((this.stunned || this.firingBow || this.attacking || this.walking)) {
       return;
     }
@@ -1705,7 +1717,7 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.height = 26;
     this.life = 3;
     this.scale = 2.6;
-    this.speed = .4 + Math.random();
+    this.speed = .1 + Math.random();
     this.scaledWidth = this.width*this.scale;
     this.scaledHeight = this.height*this.scale;
   }
@@ -1762,6 +1774,13 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   draw() {
+    if (this.flashing) {
+      this.flashFrameCount++
+      if (this.flashFrameCount < 5) {
+        return;
+      }
+      this.flashFrameCount = 0;
+    }
     this.step();
     this.poof();
   }
