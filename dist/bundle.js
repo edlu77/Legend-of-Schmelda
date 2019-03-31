@@ -640,6 +640,7 @@ class Game {
     document.addEventListener('keyup', this.link.stopWalking);
     document.addEventListener('keydown', this.link.attack);
     document.addEventListener('keydown', this.link.useBow);
+    document.addEventListener('keydown', this.link.spin);
     document.addEventListener('click', this.restartGame);
 
   }
@@ -711,7 +712,7 @@ class Game {
   }
 
   makeEnemy() {
-    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 10 && !this.isGameOver) {
+    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver) {
       this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
       this.oldTime = Date.now();
     }
@@ -1170,6 +1171,31 @@ const BOW_SPRITES = {
   ],
 }
 
+const spin_directions = ["spinRight", "spinLeft", "spinDown", "spinUp"];
+
+const SPIN_SPRITES = {
+  "spinRight": [
+    [117, 367, 20, 24],
+    [143, 367, 19, 24],
+    [169, 367, 17, 24],
+  ],
+  "spinLeft": [
+    [168, 342, 20, 24],
+    [143, 342, 19, 24],
+    [119, 342, 17, 24],
+  ],
+  "spinDown": [
+    [324, 95, 17, 24],
+    [348, 95, 18, 24],
+    [372, 95, 19, 24],
+  ],
+  "spinUp": [
+    [316, 342, 18, 22],
+    [338, 342, 21, 22],
+    [362, 342, 21, 22],
+  ],
+}
+
 class Link {
   constructor(canvas, ctx) {
     this.canvas = canvas;
@@ -1188,9 +1214,11 @@ class Link {
     this.currentLoopIndex = 0;
     this.attackCurrentLoopIndex = 0;
     this.bowCurrentLoopIndex = 0;
+    this.spinCurrentLoopIndex = 0;
     this.frameCount = 0;
     this.attackFrameCount = 0;
     this.bowFrameCount = 0;
+    this.spinFrameCount = 0;
     this.invFrameCount = 0;
     this.keys = {};
     this.attacking = false;
@@ -1198,6 +1226,7 @@ class Link {
     this.stunned = false;
     this.invincible = false;
     this.firingBow = false;
+    this.spinning = false;
     this.ammo = 5;
     this.life = 3;
     this.right = false;
@@ -1216,6 +1245,7 @@ class Link {
     this.move = this.move.bind(this);
     this.attack = this.attack.bind(this);
     this.useBow = this.useBow.bind(this);
+    this.spin = this.spin.bind(this);
     this.stopWalking = this.stopWalking.bind(this);
     this.getMoveKeys = this.getMoveKeys.bind(this);
     this.deleteMoveKeys = this.deleteMoveKeys.bind(this);
@@ -1605,6 +1635,51 @@ class Link {
     }
   }
 
+  spin(e) {
+    debugger
+    e.preventDefault();
+    if ((this.stunned || this.firingBow || this.attacking || this.walking || this.spinning)) {
+      return;
+    }
+    if (this.keys[86]) {
+      this.spinning = true;
+    }
+  }
+
+  spinAttack() {
+    if (this.spinning) {
+      let allFrames = SPIN_SPRITES[spin_directions[this.currentDirection]]
+      let numFrames = allFrames.length
+      if (this.spinFrameCount < 8) {
+        this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex]),
+        this.spinFrameCount++;
+        return;
+      }
+      this.spinFrameCount = 0;
+      this.spinCurrentLoopIndex++;
+      if (this.spinCurrentLoopIndex >= numFrames) {
+        this.spinCurrentLoopIndex = 0
+        this.spinning = false;
+        return
+      }
+      this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex]);
+    }
+  }
+
+  drawSpinFrame(frame) {
+    this.ctx.drawImage(
+      this.link2,
+      frame[0],
+      frame[1],
+      frame[2],
+      frame[3],
+      this.position[0],
+      this.position[1],
+      frame[2]*this.scale,
+      frame[3]*this.scale,
+    )
+  }
+
   drawStand() {
     this.ctx.drawImage(
       this.link,
@@ -1658,6 +1733,7 @@ class Link {
     this.swing();
     this.step();
     this.fireBow();
+    this.spinAttack();
     this.stand();
     this.invincibility();
   };
@@ -1715,7 +1791,7 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.frameCount = 0;
     this.width = 24;
     this.height = 26;
-    this.life = 3;
+    this.life = 2;
     this.scale = 2.6;
     this.speed = .1 + Math.random();
     this.scaledWidth = this.width*this.scale;
