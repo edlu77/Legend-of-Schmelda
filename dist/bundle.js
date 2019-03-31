@@ -666,7 +666,7 @@ class Game {
   update() {
     this.link.move();
     this.handleObstacleCollisions();
-    // this.makeEnemy();
+    this.makeEnemy();
     this.updateEnemies();
     this.avoidOverlap();
     this.updateArrows();
@@ -1106,7 +1106,7 @@ const STANDING = [
   [331, 120],
   [151, 0],
   [31, 0],
-  [210, 120],
+  [212, 121],
 ]; //right left down up
 
 const attack_directions = ["attackRight", "attackLeft", "attackDown", "attackUp"]
@@ -1115,21 +1115,21 @@ const ATTACK_X = {
   "attackRight": [242, 268, 295, 327, 359],
   "attackLeft": [242, 268, 295, 327, 359],
   "attackDown": [1, 30, 61, 91, 115, 145],
-  "attackUp": [0, 30, 60, 88, 115],
+  "attackUp": [0, 30, 61, 89, 115],
 }
 
 const ATTACK_Y = {
   "attackRight": [180, 180, 181, 181, 176],
   "attackLeft": [90, 90, 91, 91, 86],
   "attackDown": [90, 90, 86, 86, 87, 88],
-  "attackUp": [174, 177, 174, 177, 180],
+  "attackUp": [181, 177, 174, 177, 180],
 }
 
 const ATTACK_WIDTHS = {
   "attackRight": [18, 26, 31, 28, 23],
   "attackLeft": [18, 26, 31, 28, 23],
   "attackDown": [20, 22, 20, 20, 28, 32],
-  "attackUp": [21, 21, 21, 24, 35],
+  "attackUp": [22, 22, 20, 24, 32],
 }
 
 const ATTACK_HEIGHTS = {
@@ -1143,7 +1143,7 @@ const ATTACK_POS_OFFSET = {
   "attackRight": [[0, 0], [2, -1], [4, 2], [2, 2], [1, 1]],
   "attackLeft": [[1, 0], [-10, -1], [-16, 2], [-12, 2], [-6, 1]],
   "attackDown": [[-5, 0], [-6, 1], [-4, 1], [-4, 3], [-4, 1], [-4, 1]],
-  "attackUp": [[0, 0], [0, -7], [0, -8], [-4, -6], [-12, -1]],
+  "attackUp": [[1, 0], [0, -8], [0, -13], [-4, -8], [-12, -1]],
 }
 
 const bow_directions = ["bowRight", "bowLeft", "bowDown", "bowUp"];
