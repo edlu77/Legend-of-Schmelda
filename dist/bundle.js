@@ -666,7 +666,7 @@ class Game {
   update() {
     this.link.move();
     this.handleObstacleCollisions();
-    this.makeEnemy();
+    // this.makeEnemy();
     this.updateEnemies();
     this.avoidOverlap();
     this.updateArrows();
@@ -1232,6 +1232,13 @@ const SPIN_SPRITES = {
   ],
 }
 
+const SPIN_POS_OFFSET = {
+  "spinRight": [],
+  "spinLeft": [[0, 0], [0, 1], [0, 0], [0, 0], [0, 0], [0, 0], [-12, 0], [-12, 0], [0, -6], [0, 0], [0, 0], [0, 0]],
+  "spinDown": [[0, -4], [0, -15], [-1, -15], [0, -5], [0, -1], [0, -1], [-1, -2], [-12, -1], [-12, -1], [0, -7], [0, -5], [0, -1]],
+  "spinUp": [[-4, 0], [0, 1], [0, 0], [0, 0], [-4, 0], [-12, 0], [0, -6], [0, 0], [0, 0], [-1, 1], [-4, 1], [0, 1]],
+}
+
 class Link {
   constructor(canvas, ctx) {
     this.canvas = canvas;
@@ -1686,7 +1693,7 @@ class Link {
       let allFrames = SPIN_SPRITES[spin_directions[this.currentDirection]]
       let numFrames = allFrames.length
       if (this.spinFrameCount < 3) {
-        this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex]),
+        this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex], this.spinCurrentLoopIndex),
         this.spinFrameCount++;
         return;
       }
@@ -1697,19 +1704,21 @@ class Link {
         this.spinning = false;
         return
       }
-      this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex]);
+      this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex], this.spinCurrentLoopIndex);
     }
   }
 
-  drawSpinFrame(frame) {
+  drawSpinFrame(frame, frameCount) {
+    let spinPosX = this.position[0] + SPIN_POS_OFFSET[spin_directions[this.currentDirection]][frameCount][0]*this.scale;
+    let spinPosY = this.position[1] + SPIN_POS_OFFSET[spin_directions[this.currentDirection]][frameCount][1]*this.scale;
     this.ctx.drawImage(
       this.link2,
       frame[0],
       frame[1],
       frame[2],
       frame[3],
-      this.position[0],
-      this.position[1],
+      spinPosX,
+      spinPosY,
       frame[2]*this.scale,
       frame[3]*this.scale,
     )
