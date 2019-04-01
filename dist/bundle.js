@@ -287,6 +287,7 @@ class Enemy {
     this.dead = false;
     this.poofing = false;
     this.flashing = false;
+    this.stunned = false;
   }
 
   recoil(attackedSide) {
@@ -304,8 +305,9 @@ class Enemy {
 
   damaged() {
     this.flashing = true;
+    this.stunned = true;
     this.life -= 1;
-    setTimeout(() => {this.flashing = false;}, 2000)
+    setTimeout(() => {this.flashing = false; this.stunned = false}, 2000)
   }
 
   drawDeathPoof(frame) {
@@ -375,7 +377,7 @@ class Enemy {
   };
 
   moveTowardsObject(object) {
-    if (this.poofing) {
+    if (this.poofing || this.stunned) {
       return
     }
     let dx = Math.abs(object.position[0] - this.position[0]);
@@ -1432,7 +1434,7 @@ class Link {
   }
 
   invincibility() {
-    if (this.invincible) {
+    if (this.invincible && !this.spinning) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
       this.invFrameCount++
@@ -1475,7 +1477,7 @@ class Link {
   };
 
   step() {
-    if (this.walking) {
+    if (this.walking && !this.attacking && !this.spinning && !this.firingBow) {
       let numFrames = WALK_X[directions[this.currentDirection]].length
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
 
@@ -1545,7 +1547,7 @@ class Link {
   }
 
   move() {
-    if (this.stunned || this.attacking) {
+    if (this.stunned || this.attacking || this.spinning || this.firingBow) {
       return
     }
     if (this.down) {
@@ -1684,7 +1686,7 @@ class Link {
 
   useBow(e) {
     e.preventDefault();
-    if ((this.stunned || this.firingBow || this.attacking || this.walking || this.spinning)) {
+    if ((this.stunned || this.firingBow || this.attacking || this.spinning)) {
       return;
     }
     if (this.keys[66] && this.ammo > 0) {
@@ -1695,7 +1697,7 @@ class Link {
 
   spin(e) {
     e.preventDefault();
-    if ((this.stunned || this.firingBow || this.attacking || this.walking || this.spinning)) {
+    if ((this.stunned || this.firingBow || this.attacking || this.spinning)) {
       return;
     }
     if (this.keys[86]) {
@@ -1706,9 +1708,10 @@ class Link {
   spinAttack() {
     if (this.spinning) {
       this.attacking = true;
+      this.invincible = true;
       let allFrames = SPIN_SPRITES[spin_directions[this.currentDirection]]
       let numFrames = allFrames.length
-      if (this.spinFrameCount < 1) {
+      if (this.spinFrameCount < 2) {
         this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex], this.spinCurrentLoopIndex),
         this.spinFrameCount++;
         return;
@@ -1721,6 +1724,7 @@ class Link {
         this.spinCurrentLoopIndex = 0
         this.spinning = false;
         this.attacking = false;
+        this.invincible = false;
         return
       }
       this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex], this.spinCurrentLoopIndex);
