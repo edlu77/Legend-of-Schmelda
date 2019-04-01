@@ -640,7 +640,7 @@ class Game {
     document.addEventListener('keyup', this.link.stopWalking);
     document.addEventListener('keydown', this.link.attack);
     document.addEventListener('keydown', this.link.useBow);
-    document.addEventListener('keydown', this.link.spin);
+    // document.addEventListener('keydown', this.link.spin); //enable spinning
     document.addEventListener('click', this.restartGame);
 
   }
@@ -1276,6 +1276,8 @@ class Link {
     this.left = false;
     this.down = false;
     this.up = false;
+    this.spinPosX = this.position[0];
+    this.spinPosY = this.position[1];
 
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
@@ -1304,7 +1306,19 @@ class Link {
   };
 
   hurtbox() {
-    if (this.currentDirection === 0) {
+    if (this.spinning) {
+      let allFrames = SPIN_SPRITES[spin_directions[this.currentDirection]];
+      let frame = allFrames[this.spinCurrentLoopIndex];
+      let xWidth = frame[2];
+      let yWidth = frame[3];
+      return {
+        x: this.spinPosX,
+        y: this.spinPosY,
+        width: xWidth * this.scale,
+        height: yWidth * this.scale,
+      }
+    }
+    else if (this.currentDirection === 0) {
       return {
         x: this.position[0] + this.scaledWidth,
         y: this.position[1] - 3*this.scale,
@@ -1591,7 +1605,7 @@ class Link {
   };
 
   swing() {
-    if (this.attacking) {
+    if (this.attacking && !this.spinning) {
       let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length;
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
       while (this.attackCurrentLoopIndex <= cycleLoop.length) {
@@ -1690,6 +1704,7 @@ class Link {
 
   spinAttack() {
     if (this.spinning) {
+      this.attacking = true;
       let allFrames = SPIN_SPRITES[spin_directions[this.currentDirection]]
       let numFrames = allFrames.length
       if (this.spinFrameCount < 2) {
@@ -1702,6 +1717,7 @@ class Link {
       if (this.spinCurrentLoopIndex >= numFrames) {
         this.spinCurrentLoopIndex = 0
         this.spinning = false;
+        this.attacking = false;
         return
       }
       this.drawSpinFrame(allFrames[this.spinCurrentLoopIndex], this.spinCurrentLoopIndex);
@@ -1709,19 +1725,25 @@ class Link {
   }
 
   drawSpinFrame(frame, frameCount) {
-    let spinPosX = this.position[0] + SPIN_POS_OFFSET[spin_directions[this.currentDirection]][frameCount][0]*this.scale;
-    let spinPosY = this.position[1] + SPIN_POS_OFFSET[spin_directions[this.currentDirection]][frameCount][1]*this.scale;
+    this.spinPosX = this.position[0] + SPIN_POS_OFFSET[spin_directions[this.currentDirection]][frameCount][0]*this.scale;
+    this.spinPosY = this.position[1] + SPIN_POS_OFFSET[spin_directions[this.currentDirection]][frameCount][1]*this.scale;
     this.ctx.drawImage(
       this.link2,
       frame[0],
       frame[1],
       frame[2],
       frame[3],
-      spinPosX,
-      spinPosY,
+      this.spinPosX,
+      this.spinPosY,
       frame[2]*this.scale,
       frame[3]*this.scale,
     )
+
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.spinPosX, this.spinPosY, frame[2]*this.scale, frame[3]*this.scale)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   }
 
   drawStand() {
