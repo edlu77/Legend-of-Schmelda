@@ -303,10 +303,10 @@ class Enemy {
     }
   };
 
-  damaged() {
+  damaged(attack) {
     this.flashing = true;
     this.stunned = true;
-    this.life -= 1;
+    this.life -= attack;
     setTimeout(() => {this.flashing = false; this.stunned = false}, 2000)
   }
 
@@ -410,7 +410,7 @@ class Enemy {
   }
 
   moveAwayFromEnemy(enemy) {
-    if (this.poofing) {
+    if (this.poofing || this.stunned) {
       return
     }
     if (enemy.position[0] < this.position[0]) {
@@ -766,12 +766,17 @@ class Game {
 
   checkAttacked(enemy) {
     if (this.link.attackedObject(enemy)) {
-      if (enemy.life <= 1) {
+      if (enemy.life <= 0) {
+        enemy.enemyDeathSound.play();
+        enemy.dead = true;
+        enemy.poofing = true;
+      }
+      enemy.damaged(this.link.attackValue);
+      if (enemy.life <= 0) {
         enemy.enemyDeathSound.play();
         enemy.dead = true;
         enemy.poofing = true;
       } else {
-        enemy.damaged();
         enemy.recoil(this.link.attackDirection);
       }
     }
@@ -781,12 +786,12 @@ class Game {
     for (let j = 0; j < this.arrows.length; j++) {
       if (enemy.collidedWith(this.arrows[j])) {
         this.arrowHitSound.play();
-        if (enemy.life <= 1) {
+        if (enemy.life <= 0) {
           enemy.enemyDeathSound.play();
           enemy.dead = true;
           enemy.poofing = true;
         } else {
-          enemy.damaged();
+          enemy.damaged(this.link.attackValue);
           enemy.recoil(this.arrows[j].direction);
         }
         this.arrows.splice(j, 1);
@@ -1105,10 +1110,10 @@ const WALK_Y = {
 };
 
 const STANDING = [
-  [331, 120],
-  [151, 0],
-  [31, 0],
-  [212, 121],
+  [331, 120, 19, 23],
+  [151, 0, 19, 23],
+  [33, 1, 16, 22],
+  [212, 121, 17, 22],
 ]; //right left down up
 
 const attack_directions = ["attackRight", "attackLeft", "attackDown", "attackUp"]
@@ -1248,8 +1253,8 @@ class Link {
     this.link.src = './assets/link_sprites.png';
     this.link2 = new Image();
     this.link2.src = './assets/link-2.gif';
-    this.width = 20;
-    this.height = 25;
+    this.width = 19;
+    this.height = 23;
     this.scale = 2.6;
     this.scaledWidth = this.scale*this.width;
     this.scaledHeight = this.scale*this.height;
@@ -1280,6 +1285,7 @@ class Link {
     this.spinPosX = this.position[0];
     this.spinPosY = this.position[1];
     this.attackDirection = this.currentDirection;
+    this.attackValue = 0;
 
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
@@ -1314,10 +1320,10 @@ class Link {
       let xWidth = frame[2];
       let yWidth = frame[3];
       return {
-        x: this.spinPosX,
-        y: this.spinPosY,
-        width: xWidth * this.scale,
-        height: yWidth * this.scale,
+        x: this.spinPosX - 5,
+        y: this.spinPosY - 5,
+        width: xWidth * this.scale + 10,
+        height: yWidth * this.scale + 10,
       }
     }
     else if (this.currentDirection === 0) {
@@ -1489,17 +1495,6 @@ class Link {
         this.frameCount++
         return
       }
-      // this.frameCount = 0;
-    //   this.currentLoopIndex++;
-    //   if (this.currentLoopIndex >= numFrames) {
-    //     this.currentLoopIndex = 0;
-    //   this.drawWalkFrame(
-    //     directions[this.currentDirection],
-    //     cycleLoop[this.currentLoopIndex],
-    //   );
-    //   }
-    //
-    // }
       this.frameCount = 0;
       this.currentLoopIndex++;
       if (this.currentLoopIndex >= numFrames) {
@@ -1647,6 +1642,7 @@ class Link {
       this.swordSwingSounds[swordSoundIdx].play();
       this.walking = false;
       this.attacking = true;
+      this.attackValue = 1;
     }
   }
 
@@ -1692,6 +1688,7 @@ class Link {
     if (this.keys[66] && this.ammo > 0) {
       this.arrowShootSound.play();
       this.firingBow = true;
+      this.attackValue = 1;
     }
   }
 
@@ -1702,6 +1699,7 @@ class Link {
     }
     if (this.keys[86]) {
       this.spinning = true;
+      this.attackValue = 3;
     }
   }
 
@@ -1717,7 +1715,6 @@ class Link {
         return;
       }
       this.attackDirection = (allFrames[this.spinCurrentLoopIndex])[4]
-      console.log(this.attackDirection)
       this.spinFrameCount = 0;
       this.spinCurrentLoopIndex++;
       if (this.spinCurrentLoopIndex >= numFrames) {
@@ -1758,13 +1755,19 @@ class Link {
       this.link,
       STANDING[this.currentDirection][0],
       STANDING[this.currentDirection][1],
-      this.width,
-      this.height,
+      STANDING[this.currentDirection][2],
+      STANDING[this.currentDirection][3],
       this.position[0],
       this.position[1],
-      this.scaledWidth,
-      this.scaledHeight,
+      STANDING[this.currentDirection][2]*this.scale,
+      STANDING[this.currentDirection][3]*this.scale,
     );
+
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0], this.position[1], STANDING[this.currentDirection][2]*this.scale, STANDING[this.currentDirection][3]*this.scale)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   }
 
   stand() {
@@ -1777,7 +1780,7 @@ class Link {
     this.getItemSound.play();
     if (item instanceof _arrow_item__WEBPACK_IMPORTED_MODULE_0__["default"]) {
       this.ammo += item.value;
-    } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"] && this.life <= 5) {
+    } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"] && this.life < 5) {
       this.life++;
     }
   }
@@ -1916,7 +1919,7 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
       this.scale*frame[3],
     )
     // this.ctx.beginPath();
-    // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    // this.ctx.rect(this.position[0], this.position[1], this.scale*frame[2], this.scale*frame[3])
     // this.ctx.lineWidth = 1
     // this.ctx.strokeStyle = 'yellow';
     // this.ctx.stroke();
