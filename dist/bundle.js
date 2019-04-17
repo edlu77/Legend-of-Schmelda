@@ -291,7 +291,6 @@ class Enemy {
   }
 
   recoil(attackedSide) {
-    this.flashing = true;
     if (attackedSide === 0) {
       this.position = [this.position[0] + 75, this.position[1]]
     } else if (attackedSide === 1) {
@@ -479,6 +478,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _heart_item_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./heart_item.js */ "./lib/heart_item.js");
 /* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
 /* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./info.js */ "./lib/info.js");
+/* harmony import */ var _level_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./level.js */ "./lib/level.js");
+
 
 
 
@@ -504,6 +505,7 @@ class Game {
     this.canRestart = false;
     this.currentMusic = null;
     this.musicMuted = false;
+    this.currentLevel = 1
 
     this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
@@ -574,9 +576,10 @@ class Game {
     this.oldTime = Date.now();
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx);
     this.currentMusic = this.hyruleTheme;
+    this.currentLevel = 1;
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
-    this.makeObstacles();
+    this.makeLevel();
     this.loop();
   }
 
@@ -642,19 +645,14 @@ class Game {
     document.addEventListener('keyup', this.link.stopWalking);
     document.addEventListener('keydown', this.link.attack);
     document.addEventListener('keydown', this.link.useBow);
-    document.addEventListener('keydown', this.link.spin); //enable spinning
+    // document.addEventListener('keydown', this.link.spin); //enable spinning
     document.addEventListener('click', this.restartGame);
 
   }
 
-  makeObstacles() {
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 0], 355, 23))
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 32], 25, 72));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 193], 79, 48));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([0, 241], 96, 11));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([329, 29], 26, 72));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([268, 195], 87, 57));
-    this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_6__["default"]([252, 244], 16, 8));
+  makeLevel() {
+    let currentLevel = new _level_js__WEBPACK_IMPORTED_MODULE_8__["default"](this.currentLevel)
+    currentLevel.makeObstacles(this.obstacles)
   }
 
   loop() {
@@ -1075,6 +1073,50 @@ class Item {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Item);
+
+
+/***/ }),
+
+/***/ "./lib/level.js":
+/*!**********************!*\
+  !*** ./lib/level.js ***!
+  \**********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
+
+
+const OBSTACLES = {
+  1: [
+    [[0, 0], 355, 23],
+    [[0, 32], 25, 72],
+    [[0, 193], 79, 48],
+    [[0, 241], 96, 11],
+    [[329, 29], 26, 72],
+    [[268, 195], 87, 57],
+    [[252, 244], 16, 8],
+  ],
+  2: [
+    [[100, 100], 20, 20],
+  ]
+}
+
+class Level {
+  constructor (currentLevel) {
+    this.level = currentLevel;
+  }
+
+  makeObstacles (obstacles) {
+    OBSTACLES[this.level].forEach ((obstacle) => {
+      obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_0__["default"](obstacle[0], obstacle[1], obstacle[2]))
+    })
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Level);
 
 
 /***/ }),
@@ -1602,8 +1644,8 @@ class Link {
   };
 
   swing() {
+    this.attackDirection = this.currentDirection;
     if (this.attacking && !this.spinning) {
-      this.attackDirection = this.currentDirection;
       let numFrames = ATTACK_X[attack_directions[this.currentDirection]].length;
       let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
       while (this.attackCurrentLoopIndex <= cycleLoop.length) {
