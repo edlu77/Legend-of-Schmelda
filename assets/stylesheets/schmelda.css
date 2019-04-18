@@ -107,6 +107,18 @@ a > img {
   margin: 0 auto;
 }
 
+.game-window-2 {
+  width: 710px;
+  height: 510px;
+  background: url('../dungeon.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: black;
+  border: 1px solid black;
+  margin: 0 auto;
+}
+
 .main-menu {
   width: 710px;
   height: 510px;

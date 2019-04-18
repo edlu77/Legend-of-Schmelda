@@ -292,13 +292,13 @@ class Enemy {
 
   recoil(attackedSide) {
     if (attackedSide === 0) {
-      this.position = [this.position[0] + 75, this.position[1]]
+      this.position = [this.position[0] + 40, this.position[1]]
     } else if (attackedSide === 1) {
-      this.position = [this.position[0] - 75, this.position[1]]
+      this.position = [this.position[0] - 40, this.position[1]]
     } else if (attackedSide === 2) {
-      this.position = [this.position[0], this.position[1] + 75]
+      this.position = [this.position[0], this.position[1] + 40]
     } else {
-      this.position = [this.position[0], this.position[1] - 75]
+      this.position = [this.position[0], this.position[1] - 40]
     }
   };
 
@@ -352,15 +352,6 @@ class Enemy {
       return true;
     } else {
       return false;
-    }
-  };
-
-  hitbox() {
-    return {
-      x: this.position[0],
-      y: this.position[1],
-      width: this.width*this.scale,
-      height: this.height*this.scale,
     }
   };
 
@@ -500,6 +491,7 @@ class Game {
     this.arrows = [];
     this.items = [];
     this.oldTime = Date.now();
+    this.oldArrowTime = Date.now();
     this.isGameOver = false;
     this.score = 0;
     this.canRestart = false;
@@ -522,6 +514,7 @@ class Game {
     this.restartGame = this.restartGame.bind(this);
     this.muteMusic = this.muteMusic.bind(this);
     this.onMusic = this.onMusic.bind(this);
+    this.makeLevel = this.makeLevel.bind(this);
   }
 
   openMenu() {
@@ -579,13 +572,12 @@ class Game {
     this.currentLevel = 1;
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
-    this.makeLevel();
     this.loop();
   }
 
   stopGame() {
     this.enemies = [];
-    const gameWindow = document.getElementsByClassName('game-window')[0];
+    const gameWindow = document.getElementsByClassName('game-window')[0] ? document.getElementsByClassName('game-window')[0] : document.getElementsByClassName('game-window-2')[0];
     gameWindow.className = 'game-window close';
   }
 
@@ -650,10 +642,7 @@ class Game {
 
   }
 
-  makeLevel() {
-    let currentLevel = new _level_js__WEBPACK_IMPORTED_MODULE_8__["default"](this.currentLevel)
-    currentLevel.makeObstacles(this.obstacles)
-  }
+
 
   loop() {
     if (!this.isGameOver) {
@@ -673,6 +662,8 @@ class Game {
     this.makeArrow();
     this.updateItems();
     this.gameOver();
+    this.makeLevel();
+    // this.moveToNextLevel();
   }
 
   draw() {
@@ -712,8 +703,13 @@ class Game {
   }
 
   makeEnemy() {
-    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver) {
+    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 1) {
       this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
+      this.oldTime = Date.now();
+    }
+
+    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 2) {
+      this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
       this.oldTime = Date.now();
     }
   }
@@ -764,17 +760,12 @@ class Game {
 
   checkAttacked(enemy) {
     if (this.link.attackedObject(enemy)) {
-      if (enemy.life <= 0) {
-        enemy.enemyDeathSound.play();
-        enemy.dead = true;
-        enemy.poofing = true;
-      }
-      enemy.damaged(this.link.attackValue);
-      if (enemy.life <= 0) {
+      if (enemy.life - this.link.attackValue <= 0) {
         enemy.enemyDeathSound.play();
         enemy.dead = true;
         enemy.poofing = true;
       } else {
+        enemy.damaged(this.link.attackValue);
         enemy.recoil(this.link.attackDirection);
       }
     }
@@ -844,7 +835,7 @@ class Game {
       if (this.arrowLimit()) {
         return
       } else {
-
+        this.link.arrowShootSound.play();
         this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_3__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
         this.link.ammo -= 1;
       }
@@ -852,10 +843,10 @@ class Game {
   }
 
   arrowLimit() {
-    if (Date.now() - this.oldTime < 500) {
+    if (Date.now() - this.oldArrowTime < 500) {
       return true
     }
-    this.oldTime = Date.now();
+    this.oldArrowTime = Date.now();
   }
 
   updateArrows() {
@@ -901,6 +892,22 @@ class Game {
       }
     }
   }
+
+  makeLevel() {
+    let currentLevel = new _level_js__WEBPACK_IMPORTED_MODULE_8__["default"](this.currentLevel);
+    this.obstacles = currentLevel.makeObstacles();
+  }
+
+  moveToNextLevel() {
+    const gameWindow = document.getElementsByClassName('game-window')[0];
+    if (this.link.position[1] + this.link.scaledHeight > this.canvas.height && this.currentLevel === 1) {
+      gameWindow.className = 'game-window-2';
+      this.currentLevel = 2;
+      this.enemies = [];
+      this.link.position = [this.link.position[0], 0]
+    }
+  }
+
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
@@ -1100,19 +1107,26 @@ const OBSTACLES = {
     [[252, 244], 16, 8],
   ],
   2: [
-    [[100, 100], 20, 20],
+    [[0, 0], 0, 0],
   ]
 }
 
 class Level {
   constructor (currentLevel) {
     this.level = currentLevel;
+    this.obstacles = [];
+    this.enemies = [];
   }
 
-  makeObstacles (obstacles) {
+  makeObstacles () {
     OBSTACLES[this.level].forEach ((obstacle) => {
-      obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_0__["default"](obstacle[0], obstacle[1], obstacle[2]))
+      this.obstacles.push(new _obstacle_js__WEBPACK_IMPORTED_MODULE_0__["default"](obstacle[0], obstacle[1], obstacle[2]))
     })
+    return this.obstacles;
+  }
+
+  makeEnemies () {
+
   }
 }
 
@@ -1135,21 +1149,53 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const directions = ["walkRight", "walkLeft", "walkDown", "walkUp"]
+const directions = ["walkRight", "walkLeft", "walkDown", "walkUp"];
 
-const WALK_X = {
-  "walkRight": [241, 271, 301, 331, 361, 391],
-  "walkLeft": [241, 271, 301, 331, 361, 391],
-  "walkDown": [0, 30, 60, 90, 120, 150, 180, 210],
-  "walkUp": [0, 30, 60, 90, 120, 150, 180, 210],
-};
+const WALK_SPRITES = {
+  "walkRight": [
+    [241, 120, 19, 24],
+    [272, 120, 18, 24],
+    [301, 120, 19, 23],
+    [331, 120, 19, 23],
+    [361, 120, 19, 24],
+    [392, 120, 18, 24],
+  ],
+  "walkLeft": [
+    [241, 30, 19, 24],
+    [272, 30, 18, 24],
+    [301, 30, 19, 23],
+    [331, 30, 19, 23],
+    [361, 30, 19, 24],
+    [392, 30, 18, 24],
+  ],
+  "walkDown": [
+    [3, 31, 16, 22],
+    [33, 31, 16, 22],
+    [63, 30, 16, 23],
+    [93, 30, 16, 24],
+    [123, 31, 16, 22],
+    [153, 30, 16, 23],
+    [183, 30, 16, 23],
+    [213, 30, 16, 24],
+  ],
+  "walkUp": [
+    [2, 120, 17, 23],
+    [32, 120, 17, 24],
+    [62, 121, 17, 22],
+    [92, 121, 17, 22],
+    [122, 120, 17, 23],
+    [152, 120, 17, 24],
+    [182, 121, 17, 22],
+    [212, 121, 17, 22],
+  ],
+}
 
-const WALK_Y = {
-  "walkRight": 120,
-  "walkLeft": 30,
-  "walkDown": 30,
-  "walkUp": 120,
-};
+const WALK_POS_OFFSET = {
+  "walkRight": [[0, -1], [1, -1], [0, 0], [0, 0], [0, -1], [1, -1]],
+  "walkLeft": [[0, -1], [0, -1], [0, 0], [0, 0], [0, -1], [0, -1]],
+  "walkDown": [[0, 0], [0, 0], [0, -1], [0, -2], [0, 0], [0, -1], [0, -1], [0, -2]],
+  "walkUp": [[0, -1], [0, -2], [0, 0], [0, 0], [0, -1], [0, -2], [0, 0], [0, 0]],
+}
 
 const STANDING = [
   [331, 120, 19, 23],
@@ -1199,25 +1245,32 @@ const bow_directions = ["bowRight", "bowLeft", "bowDown", "bowUp"];
 
 const BOW_SPRITES = {
   "bowRight": [
-    [117, 367, 20, 24],
-    [143, 367, 19, 24],
-    [169, 367, 17, 24],
+    [242, 150, 17, 23],
+    [271, 151, 19, 22],
+    [301, 150, 20, 23],
   ],
   "bowLeft": [
-    [168, 342, 20, 24],
-    [143, 342, 19, 24],
-    [119, 342, 17, 24],
+    [242, 60, 17, 23],
+    [271, 61, 19, 22],
+    [301, 60, 20, 23],
   ],
   "bowDown": [
-    [324, 95, 17, 24],
-    [348, 95, 18, 24],
-    [372, 95, 19, 24],
+    [2, 60, 17, 24],
+    [32, 61, 18, 21],
+    [62, 61, 18, 22],
   ],
   "bowUp": [
-    [316, 342, 18, 22],
-    [338, 342, 21, 22],
-    [362, 342, 21, 22],
+    [2, 151, 18, 22],
+    [30, 151, 21, 21],
+    [60, 151, 21, 22],
   ],
+}
+
+const BOW_POS_OFFSET = {
+  "bowRight": [[0, 0], [1, 1], [0, 0]],
+  "bowLeft": [[2, 0], [-1, 1], [-1, 0]],
+  "bowDown": [[0, 0], [0, 1], [0, 0]],
+  "bowUp": [[-2, 0], [-5, 1], [-5, 0]],
 }
 
 const spin_directions = ["spinRight", "spinLeft", "spinDown", "spinUp"];
@@ -1318,7 +1371,7 @@ class Link {
     this.invincible = false;
     this.firingBow = false;
     this.spinning = false;
-    this.ammo = 5;
+    this.ammo = 100;
     this.life = 3;
     this.right = false;
     this.left = false;
@@ -1505,17 +1558,20 @@ class Link {
 
   //moving
 
-  drawWalkFrame(direction, frame) {
+  drawWalkFrame(frame, frameCount) {
+    let walkPosX = this.position[0] + WALK_POS_OFFSET[directions[this.currentDirection]][frameCount][0]*this.scale;
+    let walkPosY = this.position[1] + WALK_POS_OFFSET[directions[this.currentDirection]][frameCount][1]*this.scale;
+
     this.ctx.drawImage(
       this.link,
-      WALK_X[direction][frame],
-      WALK_Y[direction],
-      this.width,
-      this.height,
-      this.position[0],
-      this.position[1],
-      this.scaledWidth,
-      this.scaledHeight,
+      frame[0],
+      frame[1],
+      frame[2],
+      frame[3],
+      walkPosX,
+      walkPosY,
+      this.scale*frame[2],
+      this.scale*frame[3],
     )
     // this.ctx.beginPath();
     // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
@@ -1526,26 +1582,22 @@ class Link {
 
   step() {
     if (this.walking && !this.attacking && !this.spinning && !this.firingBow) {
-      let numFrames = WALK_X[directions[this.currentDirection]].length
-      let cycleLoop = Array.from({length: numFrames}, (x,i) => i);
-
+      let allFrames = WALK_SPRITES[directions[this.currentDirection]];
+      let numFrames = allFrames.length;
       if (this.frameCount < 3) {
-        this.drawWalkFrame(
-          directions[this.currentDirection],
-          cycleLoop[this.currentLoopIndex],
-        );
-        this.frameCount++
-        return
+        if (this.currentLoopIndex >= numFrames) {
+          this.currentLoopIndex = 0;
+        }
+        this.drawWalkFrame(allFrames[this.currentLoopIndex], this.currentLoopIndex);
+        this.frameCount++;
+        return;
       }
       this.frameCount = 0;
       this.currentLoopIndex++;
       if (this.currentLoopIndex >= numFrames) {
         this.currentLoopIndex = 0;
       }
-      this.drawWalkFrame(
-        directions[this.currentDirection],
-        this.currentLoopIndex,
-      );
+      this.drawWalkFrame(allFrames[this.currentLoopIndex], this.currentLoopIndex);
     }
   };
 
@@ -1688,15 +1740,18 @@ class Link {
     }
   }
 
-  drawBowFrame(frame) {
+  drawBowFrame(frame, frameCount) {
+    let bowPosX = this.position[0] + BOW_POS_OFFSET[bow_directions[this.currentDirection]][frameCount][0]*this.scale;
+    let bowPosY = this.position[1] + BOW_POS_OFFSET[bow_directions[this.currentDirection]][frameCount][1]*this.scale;
+
     this.ctx.drawImage(
-      this.link2,
+      this.link,
       frame[0],
       frame[1],
       frame[2],
       frame[3],
-      this.position[0],
-      this.position[1],
+      bowPosX,
+      bowPosY,
       frame[2]*this.scale,
       frame[3]*this.scale,
     )
@@ -1706,8 +1761,8 @@ class Link {
     if (this.firingBow) {
       let allFrames = BOW_SPRITES[bow_directions[this.currentDirection]]
       let numFrames = allFrames.length
-      if (this.bowFrameCount < 8) {
-        this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]),
+      if (this.bowFrameCount < 5) {
+        this.drawBowFrame(allFrames[this.bowCurrentLoopIndex], this.bowCurrentLoopIndex),
         this.bowFrameCount++;
         return;
       }
@@ -1718,7 +1773,7 @@ class Link {
         this.firingBow = false;
         return
       }
-      this.drawBowFrame(allFrames[this.bowCurrentLoopIndex]);
+      this.drawBowFrame(allFrames[this.bowCurrentLoopIndex], this.bowCurrentLoopIndex);
     }
   }
 
@@ -1728,7 +1783,6 @@ class Link {
       return;
     }
     if (this.keys[66] && this.ammo > 0) {
-      this.arrowShootSound.play();
       this.firingBow = true;
       this.attackValue = 1;
     }
@@ -1907,11 +1961,10 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.moblin.src = './assets/enemies.png';
     this.currentLoopIndex = 0;
     this.frameCount = 0;
+    this.life = 2;
+    this.speed = .1 + Math.random();
     this.width = 24;
     this.height = 26;
-    this.life = 2;
-    this.scale = 2.6;
-    this.speed = .1 + Math.random();
     this.scaledWidth = this.width*this.scale;
     this.scaledHeight = this.height*this.scale;
   }
@@ -1936,6 +1989,8 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     let allFrames = MOBLIN_SPRITES[moblin_directions[this.currentDirection]]
     let numFrames = allFrames.length;
     if (this.frameCount < 8) {
+      this.width = allFrames[2];
+      this.height = allFrames[3];
       this.drawWalkFrame(allFrames[this.currentLoopIndex])
       this.frameCount++;
       return
@@ -2074,64 +2129,30 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.walkCycle = 0;
     this.frameCount = -1;
     this.life = 3;
-    this.scale = 2.6;
     this.speed = Math.random()*.8;
-
-    this.move = this.move.bind(this);
+    this.width = 24;
+    this.height = 22;
+    this.scaledWidth = this.width*this.scale;
+    this.scaledHeight = this.height*this.scale;
   }
 
   hitbox() {
     return {
       x: this.position[0],
       y: this.position[1],
-      width: 24*this.scale,
-      height: 22*this.scale,
+      width: this.scaledWidth,
+      height: this.scaledHeight,
     }
   };
 
-  moveTowardsObject(object) {
-    if (object.position[0] < this.position[0]) {
-      this.position[0] -= this.speed;
-      this.currentDirection = 1;
-    }
-    if (object.position[1] < this.position[1]) {
-      this.position[1] -= this.speed;
-      this.currentDirection = 2;
-    }
-    if (object.position[0] > this.position[0]) {
-      this.position[0] += this.speed;
-      this.currentDirection = 0;
-    }
-    if (object.position[1] > this.position[1]) {
-      this.position[1] += this.speed;
-      this.currentDirection = 3;
-    }
-  }
-
   move(player) {
-    // if (this.currentDirection === 0) {
-    //   this.position[0] += this.speed;
-    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
-    //     this.currentDirection = 1
-    //   }
-    // } else if (this.currentDirection === 1) {
-    //   this.position[0] -= this.speed;
-    //   if (this.position[0] + this.width > this.canvas.width || this.position[0] < 0) {
-    //     this.currentDirection = 0
-    //   }
-    // }
     this.moveTowardsObject(player)
   }
 
-  getSprite() {
-    if (this.walkCycle === 0) {
-      return WALLMASTER_SPRITES[0]
-    } else {
-      return WALLMASTER_SPRITES[1]
+  step() {
+    if (this.poofing) {
+      return
     }
-  }
-
-  draw() {
     if (this.frameCount < 9) {
       this.frameCount++
     } else {
@@ -2140,7 +2161,6 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     }
 
     let sprite = this.getSprite();
-
     this.ctx.drawImage(
       this.wallmaster,
       sprite[0],
@@ -2152,6 +2172,26 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
       this.scale*sprite[2],
       this.scale*sprite[3],
     )
+  }
+
+  getSprite() {
+    if (this.walkCycle === 0) {
+      return WALLMASTER_SPRITES[0]
+    } else {
+      return WALLMASTER_SPRITES[1]
+    }
+  }
+
+  draw() {
+    if (this.flashing) {
+      this.flashFrameCount++
+      if (this.flashFrameCount < 5) {
+        return;
+      }
+      this.flashFrameCount = 0;
+    }
+    this.step();
+    this.poof();
   }
 }
 
