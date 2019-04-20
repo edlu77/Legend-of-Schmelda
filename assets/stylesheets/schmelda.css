@@ -110,7 +110,7 @@ a > img {
 .game-window-2 {
   width: 710px;
   height: 510px;
-  background: url('../dungeon.png');
+  background: url('../dungeon-empty.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

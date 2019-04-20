@@ -487,7 +487,6 @@ class Game {
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
-    this.keys = [];
     this.arrows = [];
     this.items = [];
     this.oldTime = Date.now();
@@ -497,13 +496,15 @@ class Game {
     this.canRestart = false;
     this.currentMusic = null;
     this.musicMuted = false;
-    this.currentLevel = 1
+    this.currentLevel = 1;
+    this.nextLevelOpen = false;
 
     this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
     this.gameOverTheme = new Audio('./assets/Kakariko_Village.mp3');
     this.arrowHitSound = new Audio('./assets/LTTP_Arrow_Hit.wav');
     this.startGameSound = new Audio('./assets/LTTP_Secret.wav');
+    this.dungeonTheme = new Audio('./assets/Dungeon_Theme_02.mp3');
 
     this.draw = this.draw.bind(this);
     this.loop = this.loop.bind(this);
@@ -570,6 +571,7 @@ class Game {
     this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx);
     this.currentMusic = this.hyruleTheme;
     this.currentLevel = 1;
+    this.nextLevelOpen = false;
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.loop();
@@ -663,7 +665,8 @@ class Game {
     this.updateItems();
     this.gameOver();
     this.makeLevel();
-    // this.moveToNextLevel();
+    this.openNextLevel();
+    this.moveToNextLevel();
   }
 
   draw() {
@@ -676,23 +679,20 @@ class Game {
   }
 
 
-  // drawObstacles() {
-  //   for (var i = 0; i < this.obstacles.length; i++) {
-  //     this.ctx.beginPath();
-  //     this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
-  //     this.ctx.lineWidth = 1
-  //     this.ctx.strokeStyle = 'yellow';
-  //     this.ctx.stroke();
-  //   }
-  // }
+  drawObstacles() {
+    for (var i = 0; i < this.obstacles.length; i++) {
+      this.ctx.beginPath();
+      this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
+      this.ctx.lineWidth = 1
+      this.ctx.strokeStyle = 'yellow';
+      this.ctx.stroke();
+    }
+  }
 
   handleObstacleCollisions() {
     for (let i = 0; i < this.obstacles.length; i++) {
       for (let j = 0; j < this.enemies.length; j++) {
         if (this.enemies[j].collidedWith(this.obstacles[i])) {
-          if (i === 0) {
-            return //enemies ignore the top block
-          }
           this.enemies[j].moveAwayFromObject(this.obstacles[i]);
         }
       }
@@ -707,11 +707,11 @@ class Game {
       this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
       this.oldTime = Date.now();
     }
-
-    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 2) {
-      this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
-      this.oldTime = Date.now();
-    }
+    //
+    // if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 2) {
+    //   this.enemies.push(new Wallmaster(this.canvas, this.ctx, this.enemySpawnPos()));
+    //   this.oldTime = Date.now();
+    // }
   }
 
   dropItem(position) {
@@ -898,13 +898,28 @@ class Game {
     this.obstacles = currentLevel.makeObstacles();
   }
 
+  openNextLevel() {
+    if (this.score >= 3 && this.nextLevelOpen === false) {
+      this.startGameSound.play();
+      this.nextLevelOpen = true;
+    }
+  }
+
   moveToNextLevel() {
     const gameWindow = document.getElementsByClassName('game-window')[0];
-    if (this.link.position[1] + this.link.scaledHeight > this.canvas.height && this.currentLevel === 1) {
+    if (this.link.position[1] + this.link.scaledHeight > this.canvas.height && this.currentLevel === 1 && this.nextLevelOpen) {
       gameWindow.className = 'game-window-2';
       this.currentLevel = 2;
+      this.currentMusic.pause();
+      this.currentMusic = this.dungeonTheme;
+      this.playTheme();
       this.enemies = [];
-      this.link.position = [this.link.position[0], 0]
+      for (let i = 0; i <= 6; i++) {
+        this.enemies.push(new _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.canvas, this.ctx, [100 + i*60, 300]))
+      }
+      this.items = [];
+      this.arrows = [];
+      this.link.position = [338, 56]
     }
   }
 
@@ -1094,6 +1109,10 @@ class Item {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
+/* harmony import */ var _moblin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./moblin.js */ "./lib/moblin.js");
+/* harmony import */ var _wallmaster_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./wallmaster.js */ "./lib/wallmaster.js");
+
+
 
 
 const OBSTACLES = {
@@ -1107,7 +1126,12 @@ const OBSTACLES = {
     [[252, 244], 16, 8],
   ],
   2: [
-    [[0, 0], 0, 0],
+    [[0, 0], 165, 47],
+    [[189, 0], 166, 47],
+    [[0, 22], 41, 230],
+    [[313, 25], 20, 181],
+    [[313, 22], 42, 230],
+    [[0, 206], 355, 46],
   ]
 }
 
@@ -1125,9 +1149,6 @@ class Level {
     return this.obstacles;
   }
 
-  makeEnemies () {
-
-  }
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Level);
@@ -1371,7 +1392,7 @@ class Link {
     this.invincible = false;
     this.firingBow = false;
     this.spinning = false;
-    this.ammo = 100;
+    this.ammo = 5;
     this.life = 3;
     this.right = false;
     this.left = false;
