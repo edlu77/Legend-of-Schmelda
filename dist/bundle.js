@@ -452,6 +452,58 @@ class Enemy {
 
 /***/ }),
 
+/***/ "./lib/entrance.js":
+/*!*************************!*\
+  !*** ./lib/entrance.js ***!
+  \*************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
+
+
+class Entrance extends _obstacle_js__WEBPACK_IMPORTED_MODULE_0__["default"] {
+
+  constructor(pos, ctx) {
+    super(pos, ctx);
+    this.ctx = ctx;
+    this.pos = pos;
+    this.scale = 2;
+    this.entranceSprite = new Image();
+    this.entranceSprite.src = './assets/tiles-overworld.png';
+  }
+
+  hitbox() {
+    return {
+      x: this.pos[0],
+      y: this.pos[1],
+      width: 30*this.scale,
+      height: 30*this.scale,
+    }
+  };
+
+  draw() {
+    this.ctx.drawImage(
+      this.entranceSprite,
+      151,
+      124,
+      30,
+      30,
+      this.pos[0],
+      this.pos[1],
+      this.scale*30,
+      this.scale*30,
+    )
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Entrance);
+
+
+/***/ }),
+
 /***/ "./lib/game.js":
 /*!*********************!*\
   !*** ./lib/game.js ***!
@@ -470,6 +522,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
 /* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./info.js */ "./lib/info.js");
 /* harmony import */ var _level_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./level.js */ "./lib/level.js");
+/* harmony import */ var _entrance_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./entrance.js */ "./lib/entrance.js");
+
 
 
 
@@ -498,6 +552,7 @@ class Game {
     this.musicMuted = false;
     this.currentLevel = 1;
     this.nextLevelOpen = false;
+    this.entrance = new _entrance_js__WEBPACK_IMPORTED_MODULE_9__["default"]([200, 200], this.ctx)
 
     this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
@@ -656,7 +711,6 @@ class Game {
 
   update() {
     this.link.move();
-    this.handleObstacleCollisions();
     this.makeEnemy();
     this.updateEnemies();
     this.avoidOverlap();
@@ -665,8 +719,9 @@ class Game {
     this.updateItems();
     this.gameOver();
     this.makeLevel();
-    this.openNextLevel();
-    this.moveToNextLevel();
+    // this.openNextLevel();
+    this.updateObstacles();
+    this.handleObstacleCollisions();
   }
 
   draw() {
@@ -675,19 +730,20 @@ class Game {
     this.drawEnemies();
     this.drawArrows();
     this.drawItems();
+    this.drawEntrance();
     // this.drawObstacles();
   }
 
-
-  drawObstacles() {
-    for (var i = 0; i < this.obstacles.length; i++) {
-      this.ctx.beginPath();
-      this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
-      this.ctx.lineWidth = 1
-      this.ctx.strokeStyle = 'yellow';
-      this.ctx.stroke();
-    }
-  }
+  //
+  // drawObstacles() {
+  //   for (var i = 0; i < this.obstacles.length; i++) {
+  //     this.ctx.beginPath();
+  //     this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
+  //     this.ctx.lineWidth = 1
+  //     this.ctx.strokeStyle = 'yellow';
+  //     this.ctx.stroke();
+  //   }
+  // }
 
   handleObstacleCollisions() {
     for (let i = 0; i < this.obstacles.length; i++) {
@@ -697,7 +753,11 @@ class Game {
         }
       }
       if (this.link.collidedWith(this.obstacles[i])) {
-        this.link.moveAwayFromObject(this.obstacles[i])
+        if (this.obstacles[i] === this.entrance) {
+          this.moveToNextLevel();
+        } else {
+          this.link.moveAwayFromObject(this.obstacles[i])
+        }
       }
     }
   }
@@ -707,11 +767,6 @@ class Game {
       this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
       this.oldTime = Date.now();
     }
-    //
-    // if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 2) {
-    //   this.enemies.push(new Wallmaster(this.canvas, this.ctx, this.enemySpawnPos()));
-    //   this.oldTime = Date.now();
-    // }
   }
 
   dropItem(position) {
@@ -905,9 +960,15 @@ class Game {
     }
   }
 
+  drawEntrance() {
+    if (this.nextLevelOpen && this.currentLevel === 1) {
+      this.entrance.draw();
+    }
+  }
+
   moveToNextLevel() {
     const gameWindow = document.getElementsByClassName('game-window')[0];
-    if (this.link.position[1] + this.link.scaledHeight > this.canvas.height && this.currentLevel === 1 && this.nextLevelOpen) {
+    if (this.link.collidedWith(this.entrance) && this.currentLevel === 1 && this.nextLevelOpen) {
       gameWindow.className = 'game-window-2';
       this.currentLevel = 2;
       this.currentMusic.pause();
@@ -922,6 +983,14 @@ class Game {
       this.link.position = [338, 56]
     }
   }
+
+  updateObstacles() {
+    if (this.nextLevelOpen) {
+      this.obstacles.push(this.entrance);
+    }
+  }
+
+
 
 }
 
