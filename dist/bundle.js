@@ -719,7 +719,7 @@ class Game {
     this.updateItems();
     this.gameOver();
     this.makeLevel();
-    // this.openNextLevel();
+    this.openNextLevel();
     this.updateObstacles();
     this.handleObstacleCollisions();
   }
@@ -731,19 +731,19 @@ class Game {
     this.drawArrows();
     this.drawItems();
     this.drawEntrance();
-    // this.drawObstacles();
+    this.drawObstacles();
   }
 
-  //
-  // drawObstacles() {
-  //   for (var i = 0; i < this.obstacles.length; i++) {
-  //     this.ctx.beginPath();
-  //     this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
-  //     this.ctx.lineWidth = 1
-  //     this.ctx.strokeStyle = 'yellow';
-  //     this.ctx.stroke();
-  //   }
-  // }
+
+  drawObstacles() {
+    for (var i = 0; i < this.obstacles.length; i++) {
+      this.ctx.beginPath();
+      this.ctx.rect(this.obstacles[i].hitbox().x, this.obstacles[i].hitbox().y, this.obstacles[i].hitbox().width, this.obstacles[i].hitbox().height)
+      this.ctx.lineWidth = 1
+      this.ctx.strokeStyle = 'yellow';
+      this.ctx.stroke();
+    }
+  }
 
   handleObstacleCollisions() {
     for (let i = 0; i < this.obstacles.length; i++) {
@@ -1201,6 +1201,7 @@ const OBSTACLES = {
     [[313, 25], 20, 181],
     [[313, 22], 42, 230],
     [[0, 206], 355, 46],
+    [[165, 0], 24, 15]
   ]
 }
 
