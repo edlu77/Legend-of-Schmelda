@@ -515,14 +515,16 @@ class Entrance extends _obstacle_js__WEBPACK_IMPORTED_MODULE_0__["default"] {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wallmaster_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wallmaster.js */ "./lib/wallmaster.js");
 /* harmony import */ var _moblin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./moblin.js */ "./lib/moblin.js");
-/* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
-/* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
-/* harmony import */ var _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./arrow_item.js */ "./lib/arrow_item.js");
-/* harmony import */ var _heart_item_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./heart_item.js */ "./lib/heart_item.js");
-/* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
-/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./info.js */ "./lib/info.js");
-/* harmony import */ var _level_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./level.js */ "./lib/level.js");
-/* harmony import */ var _entrance_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./entrance.js */ "./lib/entrance.js");
+/* harmony import */ var _ganon_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ganon.js */ "./lib/ganon.js");
+/* harmony import */ var _link_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./link.js */ "./lib/link.js");
+/* harmony import */ var _arrow_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./arrow.js */ "./lib/arrow.js");
+/* harmony import */ var _arrow_item_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./arrow_item.js */ "./lib/arrow_item.js");
+/* harmony import */ var _heart_item_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./heart_item.js */ "./lib/heart_item.js");
+/* harmony import */ var _obstacle_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./obstacle.js */ "./lib/obstacle.js");
+/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./info.js */ "./lib/info.js");
+/* harmony import */ var _level_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./level.js */ "./lib/level.js");
+/* harmony import */ var _entrance_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./entrance.js */ "./lib/entrance.js");
+
 
 
 
@@ -538,7 +540,7 @@ class Game {
   constructor(canvas, ctx) {
     this.enemies = [];
     this.obstacles = [];
-    this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](canvas, ctx);
+    this.link = new _link_js__WEBPACK_IMPORTED_MODULE_3__["default"](canvas, ctx);
     this.ctx = ctx;
     this.canvas = canvas;
     this.arrows = [];
@@ -552,7 +554,7 @@ class Game {
     this.musicMuted = false;
     this.currentLevel = 1;
     this.nextLevelOpen = false;
-    this.entrance = new _entrance_js__WEBPACK_IMPORTED_MODULE_9__["default"]([200, 200], this.ctx)
+    this.entrance = new _entrance_js__WEBPACK_IMPORTED_MODULE_10__["default"]([200, 200], this.ctx)
 
     this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
@@ -623,7 +625,7 @@ class Game {
     this.enemies = [];
     this.score = 0;
     this.oldTime = Date.now();
-    this.link = new _link_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx);
+    this.link = new _link_js__WEBPACK_IMPORTED_MODULE_3__["default"](this.canvas, this.ctx);
     this.currentMusic = this.hyruleTheme;
     this.currentLevel = 1;
     this.nextLevelOpen = false;
@@ -720,6 +722,7 @@ class Game {
     this.gameOver();
     this.makeLevel();
     this.openNextLevel();
+    this.spawnBoss();
     this.updateObstacles();
     this.handleObstacleCollisions();
   }
@@ -731,7 +734,7 @@ class Game {
     this.drawArrows();
     this.drawItems();
     this.drawEntrance();
-    this.drawObstacles();
+    // this.drawObstacles();
   }
 
 
@@ -772,10 +775,10 @@ class Game {
   dropItem(position) {
     const roll = Math.random()*10;
     if (roll < 1) {
-      this.items.push(new _heart_item_js__WEBPACK_IMPORTED_MODULE_5__["default"](this.canvas, this.ctx, position, 1))
+      this.items.push(new _heart_item_js__WEBPACK_IMPORTED_MODULE_6__["default"](this.canvas, this.ctx, position, 1))
     } else if (roll >= 1 && roll < 3) {
       const amount = [1, 5, 10][Math.floor(Math.random()*3)]
-      this.items.push(new _arrow_item_js__WEBPACK_IMPORTED_MODULE_4__["default"](this.canvas, this.ctx, position, amount))
+      this.items.push(new _arrow_item_js__WEBPACK_IMPORTED_MODULE_5__["default"](this.canvas, this.ctx, position, amount))
     } else {
       return
     }
@@ -829,16 +832,20 @@ class Game {
   checkArrowHits(enemy) {
     for (let j = 0; j < this.arrows.length; j++) {
       if (enemy.collidedWith(this.arrows[j])) {
-        this.arrowHitSound.play();
-        if (enemy.life <= 0) {
-          enemy.enemyDeathSound.play();
-          enemy.dead = true;
-          enemy.poofing = true;
+        if (enemy.invincible) {
+          return
         } else {
-          enemy.damaged(this.link.attackValue);
-          enemy.recoil(this.arrows[j].direction);
-        }
+          this.arrowHitSound.play();
+          if (enemy.life <= 0) {
+            enemy.enemyDeathSound.play();
+            enemy.dead = true;
+            enemy.poofing = true;
+          } else {
+            enemy.damaged(this.link.attackValue);
+            enemy.recoil(this.arrows[j].direction);
+          }
         this.arrows.splice(j, 1);
+        }
       }
     }
   }
@@ -891,7 +898,7 @@ class Game {
         return
       } else {
         this.link.arrowShootSound.play();
-        this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_3__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
+        this.arrows.push(new _arrow_js__WEBPACK_IMPORTED_MODULE_4__["default"](this.canvas, this.ctx, startPos, this.link.currentDirection));
         this.link.ammo -= 1;
       }
     }
@@ -949,7 +956,7 @@ class Game {
   }
 
   makeLevel() {
-    let currentLevel = new _level_js__WEBPACK_IMPORTED_MODULE_8__["default"](this.currentLevel);
+    let currentLevel = new _level_js__WEBPACK_IMPORTED_MODULE_9__["default"](this.currentLevel);
     this.obstacles = currentLevel.makeObstacles();
   }
 
@@ -984,6 +991,12 @@ class Game {
     }
   }
 
+  spawnBoss() {
+    if (this.currentLevel === 2 && this.enemies.length === 0) {
+      this.enemies.push(new _ganon_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx, [this.canvas.width/2, this.canvas.height*.66]));
+    }
+  }
+
   updateObstacles() {
     if (this.nextLevelOpen) {
       this.obstacles.push(this.entrance);
@@ -995,6 +1008,118 @@ class Game {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
+
+
+/***/ }),
+
+/***/ "./lib/ganon.js":
+/*!**********************!*\
+  !*** ./lib/ganon.js ***!
+  \**********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _enemy__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./enemy */ "./lib/enemy.js");
+
+
+const ganon_directions = ["right", "left", "faceDown", "faceUp"];
+
+const GANON_SPRITES = {
+  "faceDown": [16, 379, 49, 61],
+  "faceUp": [20, 313, 45, 61],
+};
+
+class Ganon extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
+  constructor(canvas, ctx, pos) {
+    super(canvas, ctx, pos);
+    this.currentDirection = 2;
+    this.ganon = new Image();
+    this.ganon.src = './assets/gannon-2.png';
+    this.life = 10;
+    this.currentSprites = GANON_SPRITES["faceDown"]
+    this.width = this.currentSprites[2];
+    this.height = this.currentSprites[3];
+    this.scaledWidth = this.width*this.scale;
+    this.scaledHeight = this.height*this.scale;
+    this.oldTime = Date.now();
+    this.invincible = false;
+  }
+
+  hitbox() {
+    return {
+      x: this.position[0],
+      y: this.position[1],
+      width: this.scaledWidth,
+      height: this.scaledHeight,
+    }
+  };
+
+  recoil() {
+    return
+  }
+
+  damaged(attack) {
+    if (this.flashing) {
+      return
+    } else {
+      this.flashing = true;
+      this.invincible = true;
+      this.life -= attack;
+      setTimeout(() => {this.flashing = false; this.invincible = false}, 2000)
+    }
+  }
+
+  move(player) {
+    let spawnPoints = [[50, 50], [50, 200], [500, 50], [500, 200], [300, 150]]
+    if (Date.now() - this.oldTime > 3000) {
+      this.position = spawnPoints[Math.floor(Math.random()*spawnPoints.length)]
+      this.oldTime = Date.now();
+    }
+  }
+
+  attack() {
+
+  }
+
+  step() {
+    if (this.poofing) {
+      return
+    }
+    let allFrames = GANON_SPRITES["faceDown"]
+    let numFrames = allFrames.length;
+    this.drawWalkFrame(allFrames)
+  }
+
+  drawWalkFrame(frame) {
+    this.ctx.drawImage(
+      this.ganon,
+      frame[0],
+      frame[1],
+      frame[2],
+      frame[3],
+      this.position[0],
+      this.position[1],
+      this.scale*frame[2],
+      this.scale*frame[3],
+    )
+  }
+
+  draw() {
+    if (this.flashing) {
+      this.flashFrameCount++
+      if (this.flashFrameCount < 5) {
+        return;
+      }
+      this.flashFrameCount = 0;
+    }
+    this.step();
+    this.poof();
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Ganon);
 
 
 /***/ }),
@@ -1463,7 +1588,7 @@ class Link {
     this.firingBow = false;
     this.spinning = false;
     this.ammo = 5;
-    this.life = 3;
+    this.life = 999;
     this.right = false;
     this.left = false;
     this.down = false;
@@ -1595,7 +1720,11 @@ class Link {
       swordHit.y < objectHit.y + objectHit.height &&
       swordHit.y + swordHit.height > objectHit.y
       ) {
-        this.enemyHitSound.play();
+        if (object.invincible) {
+          return
+        } else {
+          this.enemyHitSound.play();
+        }
         return true
       } else {
         return false
