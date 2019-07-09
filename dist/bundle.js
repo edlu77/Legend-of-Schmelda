@@ -681,7 +681,7 @@ class Game {
     this.entrance = new _entrance_js__WEBPACK_IMPORTED_MODULE_10__["default"]([200, 200], this.ctx)
     this.bossSpawned = false;
     this.bossKilled = false;
-    this.baseSpeed = 0;
+    this.baseSpeed = .1;
 
     this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
@@ -760,7 +760,7 @@ class Game {
     this.currentMusic = this.hyruleTheme;
     this.currentLevel = 1;
     this.nextLevelOpen = false;
-    this.baseSpeed = 0;
+    this.baseSpeed = .1;
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.loop();
@@ -910,7 +910,7 @@ class Game {
   }
 
   makeEnemy() {
-    if (Date.now() - this.oldTime > 1500 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 1) {
+    if (Date.now() - this.oldTime > 1800 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 1) {
       if (this.score >= 5) {
         this.baseSpeed = .4;
       } else if (this.score >= 10) {
@@ -922,7 +922,7 @@ class Game {
       } else if (this.score >= 25) {
         this.baseSpeed = 2;
       } else {
-        this.baseSpeed = 0;
+        this.baseSpeed = .1;
       }
       let moblin = new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos());
       moblin.speed += this.baseSpeed;
@@ -2615,7 +2615,7 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.currentLoopIndex = 0;
     this.walkCycle = 0;
     this.frameCount = -1;
-    this.life = 3;
+    this.life = 5;
     this.speed = Math.random()*.8;
     this.width = 24;
     this.height = 22;
