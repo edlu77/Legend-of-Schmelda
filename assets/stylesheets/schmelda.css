@@ -148,7 +148,7 @@ a > img {
   cursor: pointer;
 }
 
-.game-over {
+.game-over, .win {
   font-size: 30px;
   border: 1px solid black;
   width: 710px;
@@ -158,7 +158,7 @@ a > img {
   font-family: returnofganon;
 }
 
-.game-over-text {
+.game-over-text, .win-text {
   text-align: center;
   position: relative;
   top: 45%;

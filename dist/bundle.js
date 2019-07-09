@@ -526,7 +526,7 @@ const FIRE_SPRITES = [
 ];
 
 class Fire extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
-  constructor(canvas, ctx, pos) {
+  constructor(canvas, ctx, pos, endpos) {
     super(canvas, ctx, pos);
     this.fire = new Image();
     this.fire.src = './assets/gannon-2.png';
@@ -541,6 +541,8 @@ class Fire extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.spawnTime = Date.now();
     this.currentLoopIndex = 0;
     this.frameCount = 0;
+    this.endPos = endpos;
+    this.speed = 3;
   }
 
   hitbox() {
@@ -560,8 +562,23 @@ class Fire extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     return
   }
 
-  move() {
-    return;
+  moveTowardsPoint(pos) {
+    if (pos[0] < this.position[0]) {
+      this.position[0] -= this.speed;
+    }
+    if (pos[1] < this.position[1]) {
+      this.position[1] -= this.speed;
+    }
+    if (pos[0] > this.position[0]) {
+      this.position[0] += this.speed;
+    }
+    if (pos[1] > this.position[1]) {
+      this.position[1] += this.speed;
+    }
+  }
+
+  move(player) {
+    this.moveTowardsPoint(this.endPos);
   }
 
   moveAwayFromEnemy() {
@@ -574,7 +591,7 @@ class Fire extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     if (this.frameCount < 4) {
       this.width = allFrames[this.currentLoopIndex][2];
       this.height = allFrames[this.currentLoopIndex][3];
-      this.drawWalkFrame(allFrames[this.currentLoopIndex])
+      this.drawFrame(allFrames[this.currentLoopIndex])
       this.frameCount++;
       return
     }
@@ -583,10 +600,10 @@ class Fire extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     if (this.currentLoopIndex >= numFrames) {
       this.currentLoopIndex = 0;
     }
-    this.drawWalkFrame(allFrames[this.currentLoopIndex])
+    this.drawFrame(allFrames[this.currentLoopIndex])
   }
 
-  drawWalkFrame(frame) {
+  drawFrame(frame) {
     this.ctx.drawImage(
       this.fire,
       frame[0],
@@ -664,6 +681,7 @@ class Game {
     this.entrance = new _entrance_js__WEBPACK_IMPORTED_MODULE_10__["default"]([200, 200], this.ctx)
     this.bossSpawned = false;
     this.bossKilled = false;
+    this.baseSpeed = 0;
 
     this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
@@ -712,11 +730,13 @@ class Game {
   }
 
   openGameWindow() {
-    const mainMenu = document.getElementsByClassName('main-menu')[0];
+    let mainMenu = document.getElementsByClassName('main-menu')[0];
     mainMenu.className = 'main-menu close';
-    const gameOver = document.getElementsByClassName('game-over')[0];
+    let gameOver = document.getElementsByClassName('game-over')[0];
     gameOver.className = 'game-over close';
-    const gameWindow = document.getElementsByClassName('game-window')[0];
+    let win = document.getElementsByClassName('win')[0];
+    win.className = 'win close';
+    let gameWindow = document.getElementsByClassName('game-window')[0];
     gameWindow.className = 'game-window';
   }
 
@@ -730,6 +750,7 @@ class Game {
     this.isGameOver = false;
     this.bossSpawned = false;
     this.canRestart = false;
+    this.bossKilled = false;
     this.arrows = [];
     this.items = [];
     this.enemies = [];
@@ -739,6 +760,7 @@ class Game {
     this.currentMusic = this.hyruleTheme;
     this.currentLevel = 1;
     this.nextLevelOpen = false;
+    this.baseSpeed = 0;
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.loop();
@@ -746,26 +768,38 @@ class Game {
 
   stopGame() {
     this.enemies = [];
+    this.items = [];
+    this.arrows = [];
     const gameWindow = document.getElementsByClassName('game-window')[0] ? document.getElementsByClassName('game-window')[0] : document.getElementsByClassName('game-window-2')[0];
     gameWindow.className = 'game-window close';
   }
 
   gameOver() {
-    if (this.isGameOver) {
+    if (this.bossKilled) {
+      this.isGameOver = true;
       this.canRestart = true;
       this.stopGame();
-      const gameOver = document.getElementsByClassName('game-over')[0];
-      gameOver.className = 'game-over';
+      const win = document.getElementsByClassName('win')[0];
+      win.className = 'win';
       this.currentMusic.pause();
       this.currentMusic = this.gameOverTheme;
       this.playTheme();
+    } else {
+      if (this.isGameOver) {
+        this.canRestart = true;
+        this.stopGame();
+        const gameOver = document.getElementsByClassName('game-over')[0];
+        gameOver.className = 'game-over';
+        this.currentMusic.pause();
+        this.currentMusic = this.gameOverTheme;
+        this.playTheme();
+      }
     }
   }
 
   restartGame(e) {
     if (this.canRestart) {
-      const restartButton = document.getElementsByClassName('restart-button')[0]
-      if (e.target === restartButton) {
+      if (e.target.className === "restart-button") {
         this.startGameSound.play();
         this.currentMusic.pause();
         this.openGameWindow();
@@ -831,8 +865,8 @@ class Game {
     this.updateItems();
     this.gameOver();
     this.makeLevel();
-    // this.openNextLevel();
-    // this.spawnBoss();
+    this.openNextLevel();
+    this.spawnBoss();
     this.updateObstacles();
     this.handleObstacleCollisions();
   }
@@ -876,8 +910,23 @@ class Game {
   }
 
   makeEnemy() {
-    if (Date.now() - this.oldTime > 2000 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 1) {
-      this.enemies.push(new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos()));
+    if (Date.now() - this.oldTime > 1500 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 1) {
+      if (this.score >= 5) {
+        this.baseSpeed = .4;
+      } else if (this.score >= 10) {
+        this.baseSpeed = .8;
+      } else if (this.score >= 15) {
+        this.baseSpeed = 1.2;
+      } else if (this.score >= 20) {
+        this.baseSpeed = 1.6;
+      } else if (this.score >= 25) {
+        this.baseSpeed = 2;
+      } else {
+        this.baseSpeed = 0;
+      }
+      let moblin = new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos());
+      moblin.speed += this.baseSpeed;
+      this.enemies.push(moblin);
       this.oldTime = Date.now();
     }
   }
@@ -1078,11 +1127,13 @@ class Game {
 
   makeLevel() {
     let currentLevel = new _level_js__WEBPACK_IMPORTED_MODULE_9__["default"](this.currentLevel);
-    this.obstacles = currentLevel.makeObstacles();
+    if (!this.link.entering) {
+      this.obstacles = currentLevel.makeObstacles();
+    };
   }
 
   openNextLevel() {
-    if (this.score === 0 && this.nextLevelOpen === false) {
+    if (this.score === 30 && this.nextLevelOpen === false) {
       this.startGameSound.play();
       this.nextLevelOpen = true;
     }
@@ -1108,26 +1159,26 @@ class Game {
       }
       this.items = [];
       this.arrows = [];
-      this.link.position = [338, 56];
+      this.obstacles = [];
+      this.link.position = [335, 56];
       this.link.currentDirection = 2;
+      this.link.entering = true;
+      setTimeout(() => {this.link.entering = false;}, 300);
     }
   }
 
   spawnBoss() {
     if (this.currentLevel === 2 && this.enemies.length === 0 && this.bossKilled === false) {
       this.bossSpawned = true;
-      this.enemies.push(new _ganon_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx, [300, 150]));
+      this.enemies.push(new _ganon_js__WEBPACK_IMPORTED_MODULE_2__["default"](this.canvas, this.ctx, [300, 250]));
     }
   }
 
   updateObstacles() {
-    if (this.nextLevelOpen) {
+    if (this.nextLevelOpen && this.currentLevel === 1) {
       this.obstacles.push(this.entrance);
     }
   }
-
-
-
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (Game);
@@ -1195,8 +1246,8 @@ class Ganon extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.fire = [];
     this.fireCount = 0;
     this.frameCount = 0;
-    this.speed = 5;
-    this.newPoint = [300, 150];
+    this.speed = 2.5;
+    this.newPoint = [300, 250];
   }
 
   hitbox() {
@@ -1241,7 +1292,7 @@ class Ganon extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
   }
 
   move(player) {
-    let spawnPoints = [[300, 150], [50, 50], [50, 200], [500, 50], [500, 200]]
+    let spawnPoints = [[300, 250], [300, 100], [100, 100], [100, 250], [450, 100], [450, 250]]
     if (Date.now() - this.spawnTime > 3000) {
       this.newPoint = spawnPoints[Math.floor(Math.random()*spawnPoints.length)]
       this.spawnTime = Date.now();
@@ -1273,14 +1324,10 @@ class Ganon extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     }
 
     if (Date.now() - this.oldTime > 1000) {
-      let newFire = new _fire__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, [Math.random()*this.canvas.width, Math.random()*this.canvas.height]);
-      if (newFire.collidedWith(this)) {
-        this.spawnFire()
-      } else {
-        this.fire.push(newFire);
-        this.oldTime = Date.now();
-        this.fireCount++;
-      }
+      let newFire = new _fire__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, [this.position[0] + this.width*this.scale, this.position[1]], [Math.random()*this.canvas.width, Math.random()*this.canvas.height]);
+      this.fire.push(newFire);
+      this.oldTime = Date.now();
+      this.fireCount++;
     }
   }
 
@@ -1536,13 +1583,11 @@ const OBSTACLES = {
     [[252, 244], 16, 8],
   ],
   2: [
-    [[0, 0], 165, 47],
-    [[189, 0], 166, 47],
+    [[0, 0], 520, 47],
     [[0, 22], 41, 230],
     [[313, 25], 20, 181],
     [[313, 22], 42, 230],
     [[0, 206], 355, 46],
-    [[165, 0], 24, 15]
   ]
 }
 
@@ -1813,6 +1858,7 @@ class Link {
     this.spinPosY = this.position[1];
     this.attackDirection = this.currentDirection;
     this.attackValue = 0;
+    this.entering = false;
 
     this.swordSwingSounds = [
       new Audio('./assets/LTTP_Sword1.wav'),
@@ -1826,7 +1872,6 @@ class Link {
     this.attack = this.attack.bind(this);
     this.useBow = this.useBow.bind(this);
     this.spin = this.spin.bind(this);
-    this.stopWalking = this.stopWalking.bind(this);
     this.getMoveKeys = this.getMoveKeys.bind(this);
     this.deleteMoveKeys = this.deleteMoveKeys.bind(this);
   };
@@ -2073,35 +2118,44 @@ class Link {
 
   move() {
     if (this.stunned || this.attacking || this.spinning || this.firingBow) {
-      return
+      return;
     }
-    if (this.down) {
+    if (this.entering) {
       this.walking = true
       this.attacking = false;
       this.firingBow = false;
-      this.position[1] += 3;
       this.currentDirection = 2;
-    }
-    if (this.up) {
-      this.walking = true
-      this.attacking = false;
-      this.firingBow = false;
-      this.position[1] -= 3;
-      this.currentDirection = 3;
-    }
-    if (this.left) {
-      this.walking = true
-      this.attacking = false;
-      this.firingBow = false;
-      this.position[0] -= 3;
-      this.currentDirection = 1;
-    }
-    if (this.right) {
-      this.walking = true
-      this.attacking = false;
-      this.firingBow = false;
-      this.position[0] += 3;
-      this.currentDirection = 0;
+      this.position[1] += 3;
+    } else {
+      this.walking = false;
+      if (this.down) {
+        this.walking = true
+        this.attacking = false;
+        this.firingBow = false;
+        this.position[1] += 3;
+        this.currentDirection = 2;
+      }
+      if (this.up) {
+        this.walking = true
+        this.attacking = false;
+        this.firingBow = false;
+        this.position[1] -= 3;
+        this.currentDirection = 3;
+      }
+      if (this.left) {
+        this.walking = true
+        this.attacking = false;
+        this.firingBow = false;
+        this.position[0] -= 3;
+        this.currentDirection = 1;
+      }
+      if (this.right) {
+        this.walking = true
+        this.attacking = false;
+        this.firingBow = false;
+        this.position[0] += 3;
+        this.currentDirection = 0;
+      }
     }
   };
 
@@ -2333,10 +2387,6 @@ class Link {
     }
   }
 
-  stopWalking(e) {
-    this.walking = false;
-  }
-
   draw() {
     this.preventOffscreen();
     this.swing();
@@ -2399,7 +2449,7 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.currentLoopIndex = 0;
     this.frameCount = 0;
     this.life = 2;
-    this.speed = .1 + Math.random();
+    this.speed = Math.random();
     this.width = 24;
     this.height = 26;
     this.scaledWidth = this.width*this.scale;
