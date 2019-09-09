@@ -143,13 +143,13 @@ class Arrow {
 
   move() {
     if (this.direction === 0) {
-      this.position[0] += 5;
+      this.position[0] += 8;
     } else if (this.direction === 1) {
-      this.position[0] -= 5;
+      this.position[0] -= 8;
     } else if (this.direction === 2) {
-      this.position[1] += 5;
+      this.position[1] += 8;
     } else {
-      this.position[1] -= 5;
+      this.position[1] -= 8;
     }
   }
 
@@ -678,10 +678,9 @@ class Game {
     this.musicMuted = false;
     this.currentLevel = 1;
     this.nextLevelOpen = false;
-    this.entrance = new _entrance_js__WEBPACK_IMPORTED_MODULE_10__["default"]([200, 200], this.ctx)
+    this.entrance = new _entrance_js__WEBPACK_IMPORTED_MODULE_10__["default"]([340, 50], this.ctx)
     this.bossSpawned = false;
     this.bossKilled = false;
-    this.baseSpeed = .1;
 
     this.mainMenuTheme = new Audio('./assets/Name_Entry.mp3');
     this.hyruleTheme = new Audio('./assets/Hyrule_Field.mp3');
@@ -760,7 +759,6 @@ class Game {
     this.currentMusic = this.hyruleTheme;
     this.currentLevel = 1;
     this.nextLevelOpen = false;
-    this.baseSpeed = .1;
     setTimeout(this.playTheme, 1000);
     this.combineListeners();
     this.loop();
@@ -910,22 +908,23 @@ class Game {
   }
 
   makeEnemy() {
-    if (Date.now() - this.oldTime > 1800 && this.enemies.length < 6 && !this.isGameOver && this.currentLevel === 1) {
+    let additionalSpeed = 0;
+    if (Date.now() - this.oldTime > 1800 && this.enemies.length < 4 && !this.isGameOver && this.currentLevel === 1) {
       if (this.score >= 5) {
-        this.baseSpeed = .4;
+        additionalSpeed = .1;
       } else if (this.score >= 10) {
-        this.baseSpeed = .8;
+        additionalSpeed = .2;
       } else if (this.score >= 15) {
-        this.baseSpeed = 1.2;
+        additionalSpeed = .3;
       } else if (this.score >= 20) {
-        this.baseSpeed = 1.6;
+        additionalSpeed = .4;
       } else if (this.score >= 25) {
-        this.baseSpeed = 2;
+        additionalSpeed = .5;
       } else {
-        this.baseSpeed = .1;
+        additionalSpeed = 0;
       }
       let moblin = new _moblin_js__WEBPACK_IMPORTED_MODULE_1__["default"](this.canvas, this.ctx, this.enemySpawnPos());
-      moblin.speed += this.baseSpeed;
+      moblin.speed += additionalSpeed;
       this.enemies.push(moblin);
       this.oldTime = Date.now();
     }
@@ -933,9 +932,9 @@ class Game {
 
   dropItem(position) {
     const roll = Math.random()*10;
-    if (roll < 1) {
+    if (roll < 3) {
       this.items.push(new _heart_item_js__WEBPACK_IMPORTED_MODULE_6__["default"](this.canvas, this.ctx, position, 1))
-    } else if (roll >= 1 && roll < 3) {
+    } else if (roll >= 3 && roll < 6) {
       const amount = [1, 5, 10][Math.floor(Math.random()*3)]
       this.items.push(new _arrow_item_js__WEBPACK_IMPORTED_MODULE_5__["default"](this.canvas, this.ctx, position, amount))
     } else {
@@ -1133,7 +1132,7 @@ class Game {
   }
 
   openNextLevel() {
-    if (this.score === 30 && this.nextLevelOpen === false) {
+    if (this.score === 10 && this.nextLevelOpen === false) {
       this.startGameSound.play();
       this.nextLevelOpen = true;
     }
@@ -2054,11 +2053,11 @@ class Link {
       this.scale*frame[2],
       this.scale*frame[3],
     )
-    // this.ctx.beginPath();
-    // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
-    // this.ctx.lineWidth = 1
-    // this.ctx.strokeStyle = 'yellow';
-    // this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
   };
 
   step() {
@@ -2178,11 +2177,11 @@ class Link {
       attackWidth*this.scale,
       attackHeight*this.scale,
     )
-    // this.ctx.beginPath();
-    // this.ctx.rect(attackPosX, attackPosY, attackWidth*this.scale, attackHeight*this.scale)
-    // this.ctx.lineWidth = 1
-    // this.ctx.strokeStyle = 'yellow';
-    // this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.rect(attackPosX, attackPosY, attackWidth*this.scale, attackHeight*this.scale)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
   };
 
   swing() {
@@ -2349,11 +2348,11 @@ class Link {
       STANDING[this.currentDirection][3]*this.scale,
     );
 
-    // this.ctx.beginPath();
-    // this.ctx.rect(this.position[0], this.position[1], STANDING[this.currentDirection][2]*this.scale, STANDING[this.currentDirection][3]*this.scale)
-    // this.ctx.lineWidth = 1
-    // this.ctx.strokeStyle = 'yellow';
-    // this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.rect(this.position[0], this.position[1], STANDING[this.currentDirection][2]*this.scale, STANDING[this.currentDirection][3]*this.scale)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
   }
 
   stand() {
@@ -2366,7 +2365,7 @@ class Link {
     this.getItemSound.play();
     if (item instanceof _arrow_item__WEBPACK_IMPORTED_MODULE_0__["default"]) {
       this.ammo += item.value;
-      this.ammo = (this.ammo >= 10) ? 10 : this.ammo;
+      this.ammo = (this.ammo >= 20) ? 20 : this.ammo;
     } else if (item instanceof _heart_item_js__WEBPACK_IMPORTED_MODULE_1__["default"] && this.life < 5) {
       this.life++;
     }
@@ -2449,16 +2448,29 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.currentLoopIndex = 0;
     this.frameCount = 0;
     this.life = 2;
-    this.speed = Math.random();
-    this.width = 24;
+    this.speed = .4;
+    this.width = 17;
     this.height = 26;
     this.scaledWidth = this.width*this.scale;
     this.scaledHeight = this.height*this.scale;
   }
 
   hitbox() {
+    if (this.currentDirection === 2) {
+      this.width = 17;
+      this.height = 32;
+    } else if (this.currentDirection === 3) {
+      this.width = 18;
+      this.height = 28;
+    } else{
+      this.width = 17;
+      this.height = 26;
+    }
+    this.scaledWidth = this.width*this.scale;
+    this.scaledHeight = this.height*this.scale;
+    const offset = [0, 7, 0, 0]
     return {
-      x: this.position[0],
+      x: this.position[0] + offset[this.currentDirection]*this.scale,
       y: this.position[1],
       width: this.scaledWidth,
       height: this.scaledHeight,
@@ -2502,11 +2514,13 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
       this.scale*frame[2],
       this.scale*frame[3],
     )
-    // this.ctx.beginPath();
-    // this.ctx.rect(this.position[0], this.position[1], this.scale*frame[2], this.scale*frame[3])
-    // this.ctx.lineWidth = 1
-    // this.ctx.strokeStyle = 'yellow';
-    // this.ctx.stroke();
+
+    const offset = [0, 7, 0, 0]
+    this.ctx.beginPath();
+    this.ctx.rect(this.position[0] + offset[this.currentDirection]*this.scale, this.position[1], this.scaledWidth, this.scaledHeight)
+    this.ctx.lineWidth = 1
+    this.ctx.strokeStyle = 'yellow';
+    this.ctx.stroke();
   }
 
   draw() {
@@ -2616,7 +2630,7 @@ class Wallmaster extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
     this.walkCycle = 0;
     this.frameCount = -1;
     this.life = 5;
-    this.speed = Math.random()*.8;
+    this.speed = Math.random()*.6;
     this.width = 24;
     this.height = 22;
     this.scaledWidth = this.width*this.scale;
