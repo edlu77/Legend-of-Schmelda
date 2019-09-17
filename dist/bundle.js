@@ -2053,11 +2053,11 @@ class Link {
       this.scale*frame[2],
       this.scale*frame[3],
     )
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0], this.position[1], this.scaledWidth, this.scaledHeight)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   };
 
   step() {
@@ -2177,11 +2177,11 @@ class Link {
       attackWidth*this.scale,
       attackHeight*this.scale,
     )
-    this.ctx.beginPath();
-    this.ctx.rect(attackPosX, attackPosY, attackWidth*this.scale, attackHeight*this.scale)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(attackPosX, attackPosY, attackWidth*this.scale, attackHeight*this.scale)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   };
 
   swing() {
@@ -2348,11 +2348,11 @@ class Link {
       STANDING[this.currentDirection][3]*this.scale,
     );
 
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0], this.position[1], STANDING[this.currentDirection][2]*this.scale, STANDING[this.currentDirection][3]*this.scale)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0], this.position[1], STANDING[this.currentDirection][2]*this.scale, STANDING[this.currentDirection][3]*this.scale)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   }
 
   stand() {
@@ -2515,12 +2515,12 @@ class Moblin extends _enemy__WEBPACK_IMPORTED_MODULE_0__["default"] {
       this.scale*frame[3],
     )
 
-    const offset = [0, 7, 0, 0]
-    this.ctx.beginPath();
-    this.ctx.rect(this.position[0] + offset[this.currentDirection]*this.scale, this.position[1], this.scaledWidth, this.scaledHeight)
-    this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = 'yellow';
-    this.ctx.stroke();
+    // const offset = [0, 7, 0, 0]
+    // this.ctx.beginPath();
+    // this.ctx.rect(this.position[0] + offset[this.currentDirection]*this.scale, this.position[1], this.scaledWidth, this.scaledHeight)
+    // this.ctx.lineWidth = 1
+    // this.ctx.strokeStyle = 'yellow';
+    // this.ctx.stroke();
   }
 
   draw() {
